@@ -1,4 +1,4 @@
-FROM node:12.4.0-alpine
+FROM nikolaik/python-nodejs:latest
 
 ARG NODE_ENV
 
