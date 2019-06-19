@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    networks:
+      - agent-net
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    networks:
+      - agent-net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - /home/volkov/dev/db/postgres:/var/lib/postgresql/data
+
+networks:
+  agent-net:
+    driver: bridge
