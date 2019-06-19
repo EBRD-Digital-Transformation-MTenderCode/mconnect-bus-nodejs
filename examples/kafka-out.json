@@ -1,0 +1,12 @@
+{
+  "command": "treasuryApprovingAc",
+  "data": {
+    "id_dok": "ocds-b3wdp1-MD-1539843713933-AC-1562389081194",
+    "id_hist": "ocds-b3wdp1-MD-1539843713933-AC-1562389081194",
+    "status": "3002",
+    "st_date": "2019-06-19T12:34:17Z",
+    "reg_nom": 1,
+    "reg_date": "2019-06-19T12:34:17Z",
+    "descr": ""
+  }
+}

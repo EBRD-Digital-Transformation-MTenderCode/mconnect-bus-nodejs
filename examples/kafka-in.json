@@ -1,0 +1,35 @@
+{
+  "id": "0d20d00c-69c6-13e8-adc0-fa7ae02cce50",
+  "command": "verificationAc",
+  "context": {
+    "operationId": "0d20d00c-69c6-13e8-adc0-fa7ae02cce50",
+    "requestId": "672aa490-928e-11e9-b0b8-53c063c3cfca",
+    "cpid": "ocds-b3wdp1-MD-1539843713933",
+    "ocid": "ocds-b3wdp1-MD-1539843713933-AC-1562389081194",
+    "stage": "AC",
+    "prevStage": "AC",
+    "processType": "supplierSigningAC",
+    "operationType": "supplierSigningAC",
+    "phase": "signed",
+    "owner": "445f6851-c908-407d-9b45-14b92f3e964b",
+    "country": "MD",
+    "language": "ro",
+    "pmd": "TEST_OT",
+    "token": "6b354ede-3da9-42ea-9ed8-f5eca360b288",
+    "startDate": "2019-06-19T12:33:12Z",
+    "id": "cs-tenderer-confirmation-on-1c31ce94-58b8-4c6a-aecf-b7d4e9d70f7d-1560512125619-4569123",
+    "timeStamp": 1560947592537,
+    "isAuction": true,
+    "awardCriteria": "costOnly"
+  },
+  "data": {
+    "treasuryBudgetSources": [
+      {
+        "budgetBreakdownID": "ocds-b3wdp1-MD-1539842137562-FS-1539843451794",
+        "budgetIBAN": "MD88TRPDBB33110A12614AC,MD71TRDBB333110A13963AB",
+        "amount": 5000.00
+      }
+    ]
+  },
+  "version": "0.0.1"
+}
