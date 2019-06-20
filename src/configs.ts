@@ -1,17 +1,45 @@
+import { AxiosRequestConfig } from "axios";
+
 import './lib/env';
 
-export const server = {
+import { IRequestBody } from "./types";
+
+const ppBaseUrl = process.env.PP_BASE_URL || "";
+
+const treasuryBaseUrl = process.env.TREASURY_BASE_URL || "";
+
+export const serverConfig = {
   port: +(process.env.PORT || '5000'),
 };
 
-export const kafkaClient = {
+export const kafkaClientConfig = {
   kafkaHost: process.env.KAFKA_HOST || '',
   connectTimeout: 3000,
   requestTimeout: 3000,
 };
 
-export const kafkaInConsumer = {
+export const kafkaInConsumerConfig = {
   inTopic: process.env.IN_TOPIC || '',
   inPartition: +(process.env.IN_PARTITION || '0'),
   inGroupId: process.env.IN_GROUP_ID || '',
+};
+
+export const dbConfig = {
+  host: process.env.DB_HOST || "",
+  port: process.env.DB_PORT || "5432",
+  dbName: process.env.DB_NAME || "",
+  userName: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASSWORD || ""
+};
+
+export const request = {
+  getEntityRelease: (cpid: string, ocid: string): AxiosRequestConfig => ({
+    method: "get",
+    url: `${ppBaseUrl}/tenders/${cpid}/${ocid}`
+  }),
+  postContractRegister: (data: IRequestBody): AxiosRequestConfig => ({
+    method: 'post',
+    url: `${treasuryBaseUrl}/api/v1/contract/register`,
+    data
+  })
 };
