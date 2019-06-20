@@ -6,7 +6,7 @@ RUN echo "Mode - " $NODE_ENV
 
 WORKDIR /transport-agent/
 
-COPY package*.json tsconfig.json nodemon.json ./
+COPY package*.json tsconfig.json nodemon.json .env.dev ./
 COPY src ./src/
 
 EXPOSE 5000
