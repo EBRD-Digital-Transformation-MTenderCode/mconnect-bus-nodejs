@@ -1,50 +1,62 @@
 import axios from 'axios';
 import { request } from '../configs';
 
-import { IIn, IRequestBody, ITreasuryBudgetSources } from '../types';
+import {
+  IAcRecord,
+  IAdditionalIdentifier, IBudgetAllocation,
+  IIn,
+  IParty, IRelatedProcess,
+  IRequestBody,
+  ITransaction,
+  ITreasuryBudgetSources,
+} from '../types';
 
 export async function contractRegister(messageData: IIn) {
   try {
     const { cpid, ocid } = messageData.context;
 
-    const { data: acReleaseResponse } = await axios(request.getEntityRelease(cpid, ocid));
-    const [acRelease] = acReleaseResponse.releases;
+    const acResponse = await axios(request.getEntityRelease(cpid, ocid));
+    const acRecord: IAcRecord = acResponse.data;
+    const [acRelease] = acRecord.releases;
 
-    const evOcid = acRelease.relatedProcesses.find((process: any) => process.relationship.some((rel: string) => rel === 'x_evaluation')).identifier;
+    const { planning, contracts, parties, relatedProcesses } = acRelease;
+
+    const evOcid = (relatedProcesses.find((process: any) => process.relationship.some((rel: string) => rel === 'x_evaluation')) || {} as IRelatedProcess).identifier;
 
     const { data: evReleaseResponse } = await axios(request.getEntityRelease(cpid, ocid));
 
-    const [contract] = acRelease.contracts;
+    const [contract] = contracts;
 
     const id_dok = `${contract.id}-${messageData.context.startDate}`;
 
-    const buyer = acRelease.parties.find((part: any) => part.roles.some((role: string) => role === 'buyer')) || {};
-    const buyerBranchesIdentifier = (buyer.additionalIdentifiers || []).find((additionalIdentifier: any) => additionalIdentifier.scheme === 'MD-BRANCHES') || {};
+    const buyer = parties.find((part: any) => part.roles.some((role: string) => role === 'buyer')) || {} as IParty;
+    const buyerBranchesIdentifier = (buyer.additionalIdentifiers || []).find((additionalIdentifier: any) => additionalIdentifier.scheme === 'MD-BRANCHES') || {} as IAdditionalIdentifier;
 
-    const supplier = acRelease.parties.find((part: any) => part.roles.some((role: string) => role === 'supplier')) || {};
-    const supplierBranchesIdentifier = (supplier.additionalIdentifiers || []).find((additionalIdentifier: any) => additionalIdentifier.scheme === 'MD-BRANCHES') || {};
+    const supplier = parties.find((part: any) => part.roles.some((role: string) => role === 'supplier')) || {} as IParty;
+    const supplierBranchesIdentifier = (supplier.additionalIdentifiers || []).find((additionalIdentifier: any) => additionalIdentifier.scheme === 'MD-BRANCHES') || {} as IAdditionalIdentifier;
 
-    const avansValue = (((acRelease.planning.implementation.transactions || []).find((transaction: any) => transaction.type === 'advance') || {}).value || {});
+    const avansValue = (((planning.implementation.transactions || []).find((transaction: any) => transaction.type === 'advance') || {} as ITransaction).value || {});
 
     const documentsOfContractSigned = contract.documents.filter((document: any) => document.documentType === 'contractSigned');
 
     const sortedDocumentsOfContractSigned = [...documentsOfContractSigned].sort((doc1: any, doc2: any) => +(new Date(doc1.datePublished)) - +(new Date(doc2.datePublished)));
 
-    const benef = acRelease.parties.filter((part: any) => part.roles.some((role: string) => role === 'supplier')).map((part: any) => ({
+    const benef = parties.filter((part: any) => part.roles.some((role: string) => role === 'supplier')).map((part: any) => ({
       id_dok,
       bbic: part.details.bankAccounts[0].identifier.id,
       biban: part.details.bankAccounts[0].accountIdentification.id,
     }));
 
     const details = messageData.data.treasuryBudgetSources.map((treasuryBudgetSource: ITreasuryBudgetSources) => {
-      const startDate = acRelease.planning.budget.budgetAllocation.find((allocation: any) => allocation.budgetBreakdownID === treasuryBudgetSource.budgetBreakdownID).period.startDate;
+      const needBudgetAllocation = planning.budget.budgetAllocation.find((allocation: any) => allocation.budgetBreakdownID === treasuryBudgetSource.budgetBreakdownID);
+      const { startDate } = (needBudgetAllocation || {} as IBudgetAllocation).period;
 
       return {
         id_dok,
         suma: treasuryBudgetSource.amount,
         piban: treasuryBudgetSource.budgetIBAN,
-        byear: startDate.substr(0, 4)
-      }
+        byear: +startDate.substr(0, 4),
+      };
     });
 
     const treasuryBody: IRequestBody = {
@@ -84,8 +96,7 @@ export async function contractRegister(messageData: IIn) {
     const { data } = await axios(request.postContractRegister(treasuryBody));
 
     console.log(data);
-  }
-  catch (e) {
+  } catch (e) {
     console.log(e);
   }
 }
