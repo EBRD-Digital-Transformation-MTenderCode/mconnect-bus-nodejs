@@ -6,13 +6,10 @@ RUN echo "Mode - " $NODE_ENV
 
 WORKDIR /transport-agent/
 
-COPY package*.json tsconfig.json nodemon.json .env.dev ./
+COPY package*.json tsconfig.json nodemon.json .env ./
 COPY src ./src/
 
 EXPOSE 5000
 
-RUN if [ $NODE_ENV == "production" ]; \
-       then npm install --only=production && npm run build; \
-       else npm install; \
-       fi
+RUN if [ "$NODE_ENV" = "production" ]; then npm install --only=production && npm run build; else npm install; fi
 

@@ -6,8 +6,8 @@ if [[ $# != 0 ]]; then
     elif [[ $1 == "dev" ]]; then
         docker-compose -f docker-compose.yml -f docker-compose.dev.yml up && docker-compose down --rmi local
     else
-        echo "Argument of environment can be 'prod' or 'dev', but entered - " $1
+        echo "Environment argument can be 'prod' or 'dev', but entered - " $1
     fi
 else
-    echo "Must be argument of environment"
+    echo "Environment argument must be present"
 fi
