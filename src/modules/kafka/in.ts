@@ -4,7 +4,7 @@ import { kafkaInConsumerConfig } from '../../configs';
 
 import Client from './client';
 
-import { saveIn } from "../db/controllers";
+import { saveIn } from "../dataBase/controllers";
 
 const InConsumer = new Kafka.Consumer(
   Client, [{
@@ -18,7 +18,9 @@ const InConsumer = new Kafka.Consumer(
 InConsumer.on('message', saveIn);
 
 InConsumer.on('error', function(err: string) {
-  console.log('ERROR !!!', err);
+  console.log('!!!KAFKA_ERROR', err);
 });
+
+
 
 export default InConsumer;

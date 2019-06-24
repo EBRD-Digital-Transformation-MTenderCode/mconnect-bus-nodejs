@@ -1,4 +1,4 @@
-export interface IRequestBody {
+export interface IContractRegisterRequestBody {
   header: IHeader,
   benef: IBenef[],
   details: IDetail[]
@@ -13,12 +13,12 @@ export interface IHeader {
   kd_val: string,
 
   pkd_fisk: string,
-  pkd_sdiv: string,
   pname: string,
+  pkd_sdiv?: string,
 
   bkd_fisk: string,
-  bkd_sdiv: string,
   bname: string,
+  bkd_sdiv?: string,
 
   desc: string,
 
@@ -26,9 +26,9 @@ export interface IHeader {
   reg_date?: string,
 
   achiz_nom: string,
-  achiz_dat: string,
+  achiz_date: string,
 
-  avans: string,
+  avans?: number,
   da_expire: string,
   c_link: string
 }

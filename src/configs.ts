@@ -2,20 +2,16 @@ import { AxiosRequestConfig } from "axios";
 
 import './lib/env';
 
-import { IRequestBody } from "./types";
+import { IContractRegisterRequestBody, TStatusCode } from "./types";
 
 const ppBaseUrl = process.env.PP_BASE_URL || "";
 
 const treasuryBaseUrl = process.env.TREASURY_BASE_URL || "";
 
-export const serverConfig = {
-  port: +(process.env.PORT || '5000'),
-};
-
 export const kafkaClientConfig = {
   kafkaHost: process.env.KAFKA_HOST || '',
-  connectTimeout: 3000,
-  requestTimeout: 3000,
+  connectTimeout: 10000,
+  requestTimeout: 10000,
 };
 
 export const kafkaInConsumerConfig = {
@@ -26,9 +22,9 @@ export const kafkaInConsumerConfig = {
 
 export const dbConfig = {
   host: process.env.DB_HOST || "",
-  port: process.env.DB_PORT || "5432",
-  dbName: process.env.DB_NAME || "",
-  userName: process.env.DB_USER || "postgres",
+  port: +(process.env.DB_PORT || 5432),
+  database: process.env.DB_NAME || "",
+  user: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || ""
 };
 
@@ -37,9 +33,13 @@ export const request = {
     method: "get",
     url: `${ppBaseUrl}/tenders/${cpid}/${ocid}`
   }),
-  postContractRegister: (data: IRequestBody): AxiosRequestConfig => ({
+  postContractRegister: (data: IContractRegisterRequestBody): AxiosRequestConfig => ({
     method: 'post',
     url: `${treasuryBaseUrl}/api/v1/contract/register`,
     data
+  }),
+  getContractsQueue: (statusNumber: TStatusCode): AxiosRequestConfig => ({
+    method: 'get',
+    url: `${treasuryBaseUrl}/api/v1/contract/queue?status=${statusNumber}`
   })
 };

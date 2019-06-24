@@ -6,14 +6,14 @@ import {
   IAdditionalIdentifier, IBudgetAllocation,
   IIn,
   IParty, IRelatedProcess,
-  IRequestBody,
+  IContractRegisterRequestBody,
   ITransaction,
   ITreasuryBudgetSources,
 } from '../types';
 
 export async function contractRegister(messageData: IIn) {
   try {
-    const { cpid, ocid } = messageData.context;
+    const { cpid, ocid } = messageData.data;
 
     const acResponse = await axios(request.getEntityRelease(cpid, ocid));
     const acRecord: IAcRecord = acResponse.data;
@@ -59,7 +59,7 @@ export async function contractRegister(messageData: IIn) {
       };
     });
 
-    const treasuryBody: IRequestBody = {
+    const treasuryBody: IContractRegisterRequestBody = {
       header: {
         id_dok,
         nr_dok: contract.id,
@@ -78,13 +78,10 @@ export async function contractRegister(messageData: IIn) {
 
         desc: contract.description,
 
-        reg_nom: '',
-        reg_date: '',
-
         achiz_nom: evOcid,
-        achiz_dat: evReleaseResponse.publishedDate,
+        achiz_date: evReleaseResponse.publishedDate,
 
-        avans: `${avansValue.amount || ''}`,
+        avans: avansValue.amount || 0,
 
         da_expire: contract.period.endDate,
         c_link: sortedDocumentsOfContractSigned[sortedDocumentsOfContractSigned.length - 1].url,
@@ -93,9 +90,9 @@ export async function contractRegister(messageData: IIn) {
       details,
     };
 
-    const { data } = await axios(request.postContractRegister(treasuryBody));
+    // const { data } = await axios(request.postContractRegister(treasuryBody));
 
-    console.log(data);
+    console.log(JSON.stringify(treasuryBody, null, 2));
   } catch (e) {
     console.log(e);
   }

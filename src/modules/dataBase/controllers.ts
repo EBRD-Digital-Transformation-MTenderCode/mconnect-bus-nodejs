@@ -1,4 +1,4 @@
-import db from '../db';
+import db from './';
 
 import { IIn } from '../../types';
 
@@ -15,7 +15,7 @@ export const saveIn = async (message: IMessage) => {
   try {
     const messageData: IIn = JSON.parse(`${value}`);
 
-    // await db.one(`INSERT INTO public.in VALUES($1, $2) RETURNING ocid`, [messageData.context.ocid, value]);
+    // await dataBase.one(`INSERT INTO public.in VALUES($1, $2) RETURNING ocid`, [messageData.context.ocid, value]);
 
     contractRegister(messageData);
 
