@@ -2,43 +2,86 @@ import pgPromise, { IMain, IDatabase } from 'pg-promise';
 
 import { dbConfig } from '../../configs';
 
-import { IDbContract } from '../../types';
+import {
+  IKafkaInRow,
+  IKafkaOutRow,
+  ITreasuryOutRow,
+  ITreasuryInRow,
+  TStatusCode,
+  ITreasuryContract,
+} from '../../types';
+import { tsToPgTs } from '../../utils';
 
 interface IUpdatingParams {
+  table: string,
   contractId: string,
   columns: {
-    [key: string]: string
+    [key: string]: string | number
   }
 }
 
 export interface IExtensions extends IDatabase<any> {
-  contractIsExist(contractId: string): Promise<{ exists: boolean }>;
-
-  getContract(contractId: string): Promise<IDbContract>;
+  getNotCommittedContracts(): Promise<ITreasuryOutRow[]>
 
   updateContract(updatingParams: IUpdatingParams): Promise<null>;
+
+  contractIsExist(table: string, contractId: string): Promise<{ exists: boolean }>;
+
+  getContract(table: string, contractId: string): Promise<IKafkaInRow | IKafkaOutRow | ITreasuryOutRow | ITreasuryInRow>;
+
+  insertContractToTreasureIn(row: ITreasuryInRow): Promise<null>
+
+  /*deleteContractFromQueue(contractId: string): Promise<null>;
+
+  insertContractToHistory(contractId: string, ocid: string, messageIn: IIn, treasuryMessage: ITreasuryContract, messageOut: IOut): Promise<null>;*/
 }
 
 const pgPromiseInst: IMain = pgPromise({
-  error: (error, e) => e.cn && console.log(`!!!DB_ERROR Connect URL - ${e.cn}`),
   extend: (obj: IExtensions) => {
-    obj.contractIsExist = (contractId: string) => {
-      return obj.one(`SELECT EXISTS (SELECT 1 FROM public.contracts WHERE "contractId" = '${contractId}' AND "treasuryResponse" IS NULL LIMIT 1);`);
-    };
+    const {
+      kafkaIn: kafkaInTable,
+      kafkaOut: kafkaOutTable,
+      treasuryOut: treasuryOutTable,
+      treasuryIn: treasuryInTable
+    } = dbConfig.tables;
 
-    obj.getContract = (contractId: string) => {
-      return obj.one(`SELECT * FROM public.contracts WHERE "contractId" = '${contractId}' LIMIT 1`);
+    obj.getNotCommittedContracts = () => {
+      return obj.manyOrNone(`SELECT * FROM ${treasuryOutTable} WHERE timestamp IS NULL;`);
     };
 
     obj.updateContract = (updatingParams: IUpdatingParams) => {
-      const { contractId, columns } = updatingParams;
+      const { table, contractId, columns } = updatingParams;
 
       const columnsString: string = Object.entries(columns).reduce((accVal, [key, value], i) => {
-        return `${accVal}${i !== 0 ? ', ' : ''}"${key}" = '${value}'`;
+        return `${accVal}${i !== 0 ? ', ' : ''}"${key}" = ${key === 'timestamp' ? `to_timestamp(${tsToPgTs(+value)})` : `'${value}'`}`;
       }, '');
 
-      return obj.none(`UPDATE public.contracts SET ${columnsString} WHERE "contractId" = '${contractId}'`);
+      return obj.none(`UPDATE ${table} SET ${columnsString} WHERE "id_doc" = '${contractId}'`);
     };
+
+    obj.contractIsExist = (table: string, contractId: string) => {
+      return obj.one(`SELECT EXISTS (SELECT 1 FROM ${table} WHERE "id_doc" = '${contractId}' LIMIT 1)`);
+    };
+
+    obj.getContract = (table: string, contractId: string) => {
+      return obj.one(`SELECT * FROM ${table} WHERE "id_doc" = '${contractId}' LIMIT 1`);
+    };
+
+    obj.insertContractToTreasureIn = ({id_doc, status_code, message, timestamp_in}) => {
+      return obj.none(`INSERT INTO ${treasuryInTable}(id_doc, status_code, message, timestamp_in) VALUES (${id_doc}, ${status_code}, ${JSON.stringify(message)}, to_timestamp(${tsToPgTs(+timestamp_in)}))`);
+    };
+
+    /*obj.insertContractToHistory = (contractId: string, ocid: string, messageIn: IIn, treasuryMessage: ITreasuryContract, messageOut: IOut) => {
+      return db.none(`INSERT INTO ${historyTable}(
+                            "contractId", ocid, "messageIn", "treasuryMessage", "messageOut"
+                            ) VALUES (${contractId}, ${ocid}, ${JSON.stringify(messageIn)}, ${JSON.stringify(treasuryMessage)}, ${JSON.stringify(messageOut)})`)
+    };
+
+    obj.deleteContractFromQueue = (contractId: string) => {
+      return obj.none(`DELETE FROM ${queueTable} WHERE "contractId" = '${contractId}'`);
+    };
+
+    */
   },
 });
 

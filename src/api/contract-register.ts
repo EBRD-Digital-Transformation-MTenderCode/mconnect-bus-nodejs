@@ -90,6 +90,8 @@ export async function contractRegister(messageData: IIn) {
       details,
     };
 
+    // write to base что отправленно что нет хранить в базе
+
     // const { data } = await axios(request.postContractRegister(treasuryBody));
 
     console.log(JSON.stringify(treasuryBody, null, 2));

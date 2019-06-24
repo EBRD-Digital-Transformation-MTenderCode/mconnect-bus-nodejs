@@ -9,7 +9,7 @@ import { saveIn } from "../dataBase/controllers";
 const InConsumer = new Kafka.Consumer(
   Client, [{
     topic: kafkaInConsumerConfig.inTopic,
-    partition: kafkaInConsumerConfig.inPartition,
+    partition: kafkaInConsumerConfig.inPartition, // delete
   }], {
     groupId: kafkaInConsumerConfig.inGroupId,
   },
