@@ -1,7 +1,7 @@
 import { IOut } from '../messages';
 
-export interface ITreasuryOutRow {
+export interface ITreasuryRequestsRow {
   id_doc: string,
   message: IOut,
-  timestamp?: number | null
+  ts?: number | null
 }

@@ -16,8 +16,11 @@ export const kafkaClientConfig = {
 
 export const kafkaInConsumerConfig = {
   inTopic: process.env.IN_TOPIC || '',
-  inPartition: +(process.env.IN_PARTITION || '0'),
   inGroupId: process.env.IN_GROUP_ID || '',
+};
+
+export const kafkaOutProducerConfig = {
+
 };
 
 export const dbConfig = {
@@ -27,10 +30,10 @@ export const dbConfig = {
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
   tables: {
-    kafkaIn: process.env.DB_TABLE_KAFKA_IN || '',
-    kafkaOut: process.env.DB_TABLE_KAFKA_OUT || '',
-    treasuryOut: process.env.DB_TABLE_TREASURY_OUT || '',
-    treasuryIn: process.env.DB_TABLE_TREASURY_IN || '',
+    requests: process.env.DB_TABLE_REQUESTS || '',
+    responses: process.env.db_table_RESPONSES || '',
+    treasuryRequests: process.env.DB_TABLE_TREASURY_REQUESTS || '',
+    treasuryResponses: process.env.DB_TABLE_TREASURY_RESPONSES || '',
   },
 };
 

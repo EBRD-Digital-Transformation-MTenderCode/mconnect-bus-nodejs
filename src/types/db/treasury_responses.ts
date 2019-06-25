@@ -1,9 +1,9 @@
 import { TStatusCode, ITreasuryContract } from '../treasury';
 
-export interface ITreasuryInRow {
+export interface ITreasuryResponsesRow {
   id_doc: string,
   status_code: TStatusCode,
   message: ITreasuryContract,
-  timestamp_in: number,
-  timestamp_commit?: number | null,
+  ts_in: number,
+  ts_commit?: number | null,
 }

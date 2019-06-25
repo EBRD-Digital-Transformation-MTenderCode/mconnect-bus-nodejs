@@ -49,10 +49,10 @@ export default class Scheduler {
         if (!res) continue;
 
         await db.updateContract({
-          table: dbConfig.tables.treasuryOut,
+          table: dbConfig.tables.treasuryRequests,
           contractId: row.id_doc,
           columns: {
-            timestamp: Date.now(),
+            ts: Date.now(),
           },
         });
       }
@@ -77,18 +77,18 @@ export default class Scheduler {
           if (this.contractIdPattern.test(contractId)) continue;
 
           try {
-            const checkResult = await db.contractIsExist(dbConfig.tables.treasuryOut, contractId);
+            const checkResult = await db.contractIsExist(dbConfig.tables.treasuryRequests, contractId);
 
             if (!checkResult.exists) continue; // log error not exist contract!!!
 
             const { id_dok, id_hist, status, st_date, reg_nom, reg_date, descr } = treasuryContract;
 
             // Save to treasure_in table
-            db.insertContractToTreasureIn({
+            db.insertContractToTreasureResponses({
               id_doc: id_dok,
               status_code: status,
               message: treasuryContract,
-              timestamp_in: Date.now(),
+              ts_in: Date.now(),
             });
 
             const res = await fetchContractCommit(contractId);
@@ -119,10 +119,10 @@ export default class Scheduler {
 
             // Update timestamp commit in treasure_in table
             await db.updateContract({
-              table: dbConfig.tables.treasuryIn,
+              table: dbConfig.tables.treasuryResponses,
               contractId: res.id_dok,
               columns: {
-                timestamp_commit: Date.now(),
+                ts_commit: Date.now(),
               },
             });
           } catch (error) {
