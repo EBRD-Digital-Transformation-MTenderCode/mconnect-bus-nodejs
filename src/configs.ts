@@ -20,7 +20,7 @@ export const kafkaInConsumerConfig = {
 };
 
 export const kafkaOutProducerConfig = {
-
+  outTopic: process.env.OUT_TOPIC || '',
 };
 
 export const dbConfig = {

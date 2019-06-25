@@ -1,1 +1,1 @@
-export type TStatusCode = '3000' | '3001' | '3002' | '3003' | '3005';
+export type TStatusCode = '3003' | '3005' | '3006';

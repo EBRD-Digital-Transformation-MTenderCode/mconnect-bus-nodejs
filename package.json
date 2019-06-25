@@ -1,5 +1,5 @@
 {
-  "name": "transport-agent",
+  "name": "mconnect-bus",
   "description": "Transport agent for validation contracts in Treasure Department",
   "version": "1.0.0",
   "main": "./build/index.js",

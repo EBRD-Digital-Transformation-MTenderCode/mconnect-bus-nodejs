@@ -1,3 +1,5 @@
+import { TStatusCode } from './index';
+
 export interface IContractQueueResponseBody {
   contract?: ITreasuryContract[]
 }
@@ -5,9 +7,9 @@ export interface IContractQueueResponseBody {
 export interface ITreasuryContract {
   id_dok: string,
   id_hist: string,
-  status: '3000' | '3001' | '3002' | '3003' | '3005',
+  status: TStatusCode,
   st_date: string,
-  reg_nom: {},
-  reg_date: {},
+  reg_nom: string,
+  reg_date: string,
   descr: string
 }

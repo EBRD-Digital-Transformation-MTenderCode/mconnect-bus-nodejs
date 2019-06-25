@@ -1,19 +1,18 @@
 import { v4 as uuid } from 'uuid';
 
+import db from '../dataBase';
+import { OutProducer } from '../kafka';
+
 import { fetchContractsQueue, fetchContractCommit } from '../../api';
 
-import { IDatabase } from 'pg-promise';
-import { IExtensions } from '../dataBase';
 import { TStatusCode, IOut } from '../../types';
 
-import { dbConfig } from '../../configs';
+import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
 interface IStatusCodesMapToCommandName {
-  '3000': '',
-  '3001': 'launchACVerification',
-  '3002': '',
   '3003': 'proceedVerifiedAC',
   '3005': 'proceedAcClarification',
+  '3006': 'proceedAcRejection',
 }
 
 export default class Scheduler {
@@ -24,64 +23,95 @@ export default class Scheduler {
 
   constructor(interval: number) {
     this.interval = interval;
-    this.statusCodes = ['3000', '3001', '3002', '3003', '3005'];
+    this.statusCodes = ['3003', '3005', '3006'];
     this.contractIdPattern = /^ocds-([a-z]|[0-9]){6}-[A-Z]{2}-[0-9]{13}-AC-[0-9]{13}-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
     this.statusCodesMapToCommandName = {
-      '3000': '',
-      '3001': 'launchACVerification',
-      '3002': '',
       '3003': 'proceedVerifiedAC',
       '3005': 'proceedAcClarification',
+      '3006': 'proceedAcRejection',
     };
   }
 
-  private async doCommitNotCommittedContracts(db: IDatabase<IExtensions> & IExtensions) {
+  private async doCommitContract(contractId: string) {
     try {
-      const notCommittedContracts = await db.getNotCommittedContracts();
+      // const res = await fetchContractCommit(row.id_doc);
+      // @TODO need change on prod
+      const res = {
+        id_dok: contractId,
+      };
 
-      for (const row of notCommittedContracts) {
-        // const res = await fetchContractCommit(row.id_doc);
-        // @TODO need change on prod
-        const res = {
-          id_dok: row.id_doc,
-        };
+      if (!res) return;
 
-        if (!res) continue;
+      await db.updateContract({
+        table: dbConfig.tables.treasuryResponses,
+        contractId,
+        columns: {
+          ts_commit: Date.now(),
+        },
+      });
 
-        await db.updateContract({
-          table: dbConfig.tables.treasuryRequests,
-          contractId: row.id_doc,
-          columns: {
-            ts: Date.now(),
-          },
-        });
-      }
+      return true;
     } catch (e) {
       console.log('!!!ERROR', e);
     }
   }
 
-  async run(db: IDatabase<IExtensions> & IExtensions) {
+  private async sendResponse(contractId: string, kafkaMessageOut: IOut) {
+    OutProducer.send([
+      {
+        topic: kafkaOutProducerConfig.outTopic,
+        messages: JSON.stringify(kafkaMessageOut),
+      },
+    ], async (err) => {
+      if (err) return console.log('!!!KAFKA_ERROR_Producer send message', err);
+
+      // Update timestamp commit in treasure_in table
+      await db.updateContract({
+        table: dbConfig.tables.responses,
+        contractId,
+        columns: {
+          ts: Date.now(),
+        },
+      });
+    });
+  }
+
+  async run() {
     setInterval(async () => {
-      await this.doCommitNotCommittedContracts(db);
+      try {
+        const notCommittedContracts = await db.getNotCommittedContracts();
+
+        for (const row of notCommittedContracts) {
+          await this.doCommitContract(row.id_doc)
+        }
+
+        const notSentContractsMessages = await db.getNotSentContractsMessages();
+
+        for (const row of notSentContractsMessages) {
+          await this.sendResponse(row.id_doc, row.message)
+        }
+      } catch (error) {
+        console.log('!!!ERROR', error);
+      }
 
       for (const statusCode of this.statusCodes) {
-        const registeredContracts = await fetchContractsQueue(statusCode);
+        const contractsQueue = await fetchContractsQueue(statusCode);
 
-        if (!registeredContracts) continue;
-        if (!registeredContracts.contract) continue;
+        if (!contractsQueue) continue;
+        if (!contractsQueue.contract) continue;
 
-        for (const treasuryContract of registeredContracts.contract) {
+        for (const treasuryContract of contractsQueue.contract) {
           const contractId = treasuryContract.id_dok;
 
+          if (treasuryContract.status !== statusCode) continue;  // @TODO log error for not exist contract!!!
           if (this.contractIdPattern.test(contractId)) continue;
 
           try {
             const checkResult = await db.contractIsExist(dbConfig.tables.treasuryRequests, contractId);
 
-            if (!checkResult.exists) continue; // log error not exist contract!!!
+            if (!checkResult.exists) continue; // @TODO log error for not exist contract!!!
 
-            const { id_dok, id_hist, status, st_date, reg_nom, reg_date, descr } = treasuryContract;
+            const { id_dok, status } = treasuryContract;
 
             // Save to treasure_in table
             db.insertContractToTreasureResponses({
@@ -91,11 +121,13 @@ export default class Scheduler {
               ts_in: Date.now(),
             });
 
-            const res = await fetchContractCommit(contractId);
+            // Committed contract and update ts_commit in treasure_responses
+            const contractIsCommitted = await this.doCommitContract(contractId);
+            if (!contractIsCommitted) continue;
 
-            if (!res) continue;
+            const { descr, st_date, reg_nom, reg_date } = treasuryContract;
 
-            const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
+            const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
             const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
             const kafkaMessageOut: IOut = {
@@ -104,29 +136,20 @@ export default class Scheduler {
               data: {
                 cpid,
                 ocid,
-                id_dok,
-                id_hist,
-                status,
-                st_date,
-                reg_nom,
-                reg_date,
-                descr,
+                verification: {
+                  value: status,
+                  rationale: descr,
+                },
+                dateMet: st_date,
               },
               version: '0.0.1',
             };
 
-            // @TODO send message to kafka topic out
+            if (status === '3005') kafkaMessageOut.data.regData = { reg_nom, reg_date };
 
-            // Update timestamp commit in treasure_in table
-            await db.updateContract({
-              table: dbConfig.tables.treasuryResponses,
-              contractId: res.id_dok,
-              columns: {
-                ts_commit: Date.now(),
-              },
-            });
+            await this.sendResponse(contractId ,kafkaMessageOut);
           } catch (error) {
-            console.log(`!!!ERROR_DB ${error}`);
+            console.log('!!!ERROR', error);
           }
         }
       }

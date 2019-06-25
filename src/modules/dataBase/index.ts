@@ -19,7 +19,11 @@ interface IUpdatingParams {
 }
 
 export interface IExtensions extends IDatabase<any> {
-  getNotCommittedContracts(): Promise<ITreasuryRequestsRow[]>
+  insertContractToTreasureResponses(row: ITreasuryResponsesRow): Promise<null>;
+
+  getNotCommittedContracts(): Promise<ITreasuryResponsesRow[] | []>
+
+  getNotSentContractsMessages(): Promise<IResponsesRow[] | []>
 
   updateContract(updatingParams: IUpdatingParams): Promise<null>;
 
@@ -27,7 +31,6 @@ export interface IExtensions extends IDatabase<any> {
 
   getContract(table: string, contractId: string): Promise<IRequestsRow | IResponsesRow | ITreasuryRequestsRow | ITreasuryResponsesRow>;
 
-  insertContractToTreasureResponses(row: ITreasuryResponsesRow): Promise<null>
 }
 
 const pgPromiseInst: IMain = pgPromise({
@@ -36,11 +39,19 @@ const pgPromiseInst: IMain = pgPromise({
       requests: requestsTable,
       responses: responsesTable,
       treasuryRequests: treasuryRequestsTable,
-      treasuryResponses: treasuryResponsesInTable,
+      treasuryResponses: treasuryResponsesTable,
     } = dbConfig.tables;
 
+    obj.insertContractToTreasureResponses = ({ id_doc, status_code, message, ts_in }) => {
+      return obj.none(`INSERT INTO ${treasuryResponsesTable}(id_doc, status_code, message, ts_in) VALUES (${id_doc}, ${status_code}, ${JSON.stringify(message)}, to_timestamp(${tsToPgTs(+ts_in)}))`);
+    };
+
     obj.getNotCommittedContracts = () => {
-      return obj.manyOrNone(`SELECT * FROM ${treasuryRequestsTable} WHERE ts IS NULL;`);
+      return obj.manyOrNone(`SELECT * FROM ${treasuryResponsesTable} WHERE ts_commit IS NULL;`);
+    };
+
+    obj.getNotSentContractsMessages = () => {
+      return obj.manyOrNone(`SELECT * FROM ${responsesTable} WHERE ts IS NULL`)
     };
 
     obj.updateContract = (updatingParams: IUpdatingParams) => {
@@ -59,10 +70,6 @@ const pgPromiseInst: IMain = pgPromise({
 
     obj.getContract = (table: string, contractId: string) => {
       return obj.one(`SELECT * FROM ${table} WHERE "id_doc" = '${contractId}' LIMIT 1`);
-    };
-
-    obj.insertContractToTreasureResponses = ({ id_doc, status_code, message, ts_in }) => {
-      return obj.none(`INSERT INTO ${treasuryResponsesInTable}(id_doc, status_code, message, ts_in) VALUES (${id_doc}, ${status_code}, ${JSON.stringify(message)}, to_timestamp(${tsToPgTs(+ts_in)}))`);
     };
   },
 });
