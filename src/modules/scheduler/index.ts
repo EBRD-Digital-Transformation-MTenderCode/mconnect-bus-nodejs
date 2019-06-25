@@ -5,7 +5,7 @@ import { OutProducer } from '../kafka';
 
 import { fetchContractsQueue, fetchContractCommit } from '../../api';
 
-import { TStatusCode, IOut } from '../../types';
+import { TStatusCode, IOut, ITreasuryContract } from '../../types';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
@@ -32,13 +32,9 @@ export default class Scheduler {
     };
   }
 
-  private async doCommitContract(contractId: string) {
+  private async commitContract(contractId: string) {
     try {
-      // const res = await fetchContractCommit(row.id_doc);
-      // @TODO need change on prod
-      const res = {
-        id_dok: contractId,
-      };
+      const res = await fetchContractCommit(contractId);
 
       if (!res) return;
 
@@ -76,29 +72,69 @@ export default class Scheduler {
     });
   }
 
+  private async commitNotCommittedContracts() {
+    try {
+      const notCommittedContracts = await db.getNotCommittedContracts();
+
+      for (const row of notCommittedContracts) {
+        await this.commitContract(row.id_doc)
+      }
+    } catch (error) {
+      console.log('!!!ERROR', error);
+    }
+  }
+
+  private async sendNotSentResponses() {
+    try {
+      const notSentContractsMessages = await db.getNotSentContractsMessages();
+
+      for (const row of notSentContractsMessages) {
+        await this.sendResponse(row.id_doc, row.message)
+      }
+    } catch (error) {
+      console.log('!!!ERROR', error);
+    }
+  }
+
+  private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
+    const { id_dok, status, descr, st_date, reg_nom, reg_date } = treasuryContract;
+
+    const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
+    const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
+
+    const kafkaMessageOut: IOut = {
+      id: uuid(),
+      command: this.statusCodesMapToCommandName[status],
+      data: {
+        cpid,
+        ocid,
+        verification: {
+          value: status,
+          rationale: descr,
+        },
+        dateMet: st_date,
+      },
+      version: '0.0.1',
+    };
+
+    if (status === '3005') kafkaMessageOut.data.regData = { reg_nom, reg_date };
+
+    return kafkaMessageOut;
+  }
+
   async run() {
     setInterval(async () => {
-      try {
-        const notCommittedContracts = await db.getNotCommittedContracts();
+      await this.commitNotCommittedContracts();
 
-        for (const row of notCommittedContracts) {
-          await this.doCommitContract(row.id_doc)
-        }
-
-        const notSentContractsMessages = await db.getNotSentContractsMessages();
-
-        for (const row of notSentContractsMessages) {
-          await this.sendResponse(row.id_doc, row.message)
-        }
-      } catch (error) {
-        console.log('!!!ERROR', error);
-      }
+      await this.sendNotSentResponses();
 
       for (const statusCode of this.statusCodes) {
         const contractsQueue = await fetchContractsQueue(statusCode);
 
         if (!contractsQueue) continue;
         if (!contractsQueue.contract) continue;
+        
+        console.log(`Fetch queue - ${statusCode}. Contracts number - ${contractsQueue.contract.length}`);
 
         for (const treasuryContract of contractsQueue.contract) {
           const contractId = treasuryContract.id_dok;
@@ -122,32 +158,10 @@ export default class Scheduler {
             });
 
             // Committed contract and update ts_commit in treasure_responses
-            const contractIsCommitted = await this.doCommitContract(contractId);
+            const contractIsCommitted = await this.commitContract(contractId);
             if (!contractIsCommitted) continue;
 
-            const { descr, st_date, reg_nom, reg_date } = treasuryContract;
-
-            const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
-            const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
-
-            const kafkaMessageOut: IOut = {
-              id: uuid(),
-              command: this.statusCodesMapToCommandName[status],
-              data: {
-                cpid,
-                ocid,
-                verification: {
-                  value: status,
-                  rationale: descr,
-                },
-                dateMet: st_date,
-              },
-              version: '0.0.1',
-            };
-
-            if (status === '3005') kafkaMessageOut.data.regData = { reg_nom, reg_date };
-
-            await this.sendResponse(contractId ,kafkaMessageOut);
+            await this.sendResponse(contractId, this.generateKafkaMessageOut(treasuryContract));
           } catch (error) {
             console.log('!!!ERROR', error);
           }
