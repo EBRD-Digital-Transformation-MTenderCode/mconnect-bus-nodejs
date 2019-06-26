@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 
 import db from '../dataBase';
 import { OutProducer } from '../kafka';
-import { appLogger } from '../logger';
+import logger from '../logger';
 
 import { fetchContractsQueue, fetchContractCommit } from '../../api';
 
@@ -124,7 +124,7 @@ export default class Scheduler {
   }
 
   async run() {
-    appLogger.info( '✔️Scheduler is running');
+    logger.info( '✔️Scheduler is running');
 
     setInterval(async () => {
       await this.commitNotCommittedContracts();
@@ -136,8 +136,8 @@ export default class Scheduler {
 
         if (!contractsQueue) continue;
         if (!contractsQueue.contract) continue;
-        
-        appLogger.info(`Fetch queue - ${statusCode}. Contracts number - ${contractsQueue.contract.length}`);
+
+        logger.info(`Fetch queue - ${statusCode}. Contracts number - ${contractsQueue.contract.length}`);
 
         for (const treasuryContract of contractsQueue.contract) {
           const contractId = treasuryContract.id_dok;

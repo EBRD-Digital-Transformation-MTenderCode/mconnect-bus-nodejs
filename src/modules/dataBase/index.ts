@@ -1,6 +1,6 @@
 import pgPromise, { IMain, IDatabase } from 'pg-promise';
 
-import { dbLogger } from '../logger';
+import logger from '../logger';
 
 import { dbConfig } from '../../configs';
 
@@ -87,7 +87,7 @@ const db = pgPromiseInst({
 }) as IDatabase<IExtensions> & IExtensions;
 
 db.connect().then(obj => {
-  dbLogger.info( '✔️Connected to database');
+  logger.info( '✔️Connected to database');
   obj.done();
 }).catch(error => {
   console.log(`!!!DB_ERROR Event - ${error.message || error}`);

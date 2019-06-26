@@ -1,8 +1,8 @@
 import Scheduler from './modules/scheduler';
 
-import { appLogger } from './modules/logger';
+import logger from './modules/logger';
 
-appLogger.info( '✔️mConnect Bus App is running');
+logger.info( '✔️mConnect Bus App is running');
 
 const scheduler = new Scheduler(5000);
 

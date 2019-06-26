@@ -58,6 +58,6 @@ export const request = {
 };
 
 export const loggerConfig = {
-  maxFileSize: +(process.env.LOG_FILE_SIZE || 10000),
-  maxFilesCount: +(process.env.LOG_FILES_COUNT || 50),
+  maxFileSizeMb: process.env.LOG_FILE_SIZE_MB || '5',
+  maxFilesSaveDays: process.env.LOG_FILES_SAVE_DAYS || '30',
 };
