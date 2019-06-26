@@ -1,6 +1,8 @@
 import Scheduler from './modules/scheduler';
 
-console.log(`--> App running`);
+import { appLogger } from './modules/logger';
+
+appLogger.info( '✔️mConnect Bus App is running');
 
 const scheduler = new Scheduler(5000);
 

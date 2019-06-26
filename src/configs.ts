@@ -56,3 +56,8 @@ export const request = {
     url: `${treasuryBaseUrl}/api/v1/contract/confirm?id_dok=${contractId}`,
   }),
 };
+
+export const loggerConfig = {
+  maxFileSize: +(process.env.LOG_FILE_SIZE || 10000),
+  maxFilesCount: +(process.env.LOG_FILES_COUNT || 50),
+};
