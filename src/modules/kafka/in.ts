@@ -11,6 +11,7 @@ const InConsumer = new Kafka.Consumer(
     topic: kafkaInConsumerConfig.inTopic,
   }], {
     groupId: kafkaInConsumerConfig.inGroupId,
+    autoCommit: false
   },
 );
 

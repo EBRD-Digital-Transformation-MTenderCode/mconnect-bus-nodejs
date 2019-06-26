@@ -23,6 +23,8 @@ interface IUpdatingParams {
 export interface IExtensions extends IDatabase<any> {
   insertContractToTreasureResponses(row: ITreasuryResponsesRow): Promise<null>;
 
+  insertContractToResponses(row: IResponsesRow): Promise<null>;
+
   getNotCommittedContracts(): Promise<ITreasuryResponsesRow[] | []>
 
   getNotSentContractsMessages(): Promise<IResponsesRow[] | []>
@@ -46,6 +48,10 @@ const pgPromiseInst: IMain = pgPromise({
 
     obj.insertContractToTreasureResponses = ({ id_doc, status_code, message, ts_in }) => {
       return obj.none(`INSERT INTO ${treasuryResponsesTable}(id_doc, status_code, message, ts_in) VALUES (${id_doc}, ${status_code}, ${JSON.stringify(message)}, to_timestamp(${tsToPgTs(+ts_in)}))`);
+    };
+
+    obj.insertContractToResponses = ({ id_doc, cmd_id, cmd_name, message }) => {
+      return obj.none(`INSERT INTO ${responsesTable}(id_doc, cmd_id, cmd_name, message) VALUES (${id_doc}, ${cmd_id}, ${cmd_name}, ${JSON.stringify(message)})`);
     };
 
     obj.getNotCommittedContracts = () => {

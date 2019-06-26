@@ -33,14 +33,13 @@ CREATE INDEX treasury_responses_index ON treasury_responses (id_doc, status_code
 CREATE TABLE IF NOT EXISTS responses
 (
     id_doc      TEXT NOT NULL,
-    status_code TEXT NOT NULL,
     cmd_id      TEXT NOT NULL,
     cmd_name    TEXT NOT NULL,
     message     JSON NOT NULL,
     ts          TIMESTAMP,
     CONSTRAINT responses_pkey
-        PRIMARY KEY (id_doc, status_code)
+        PRIMARY KEY (id_doc, cmd_name)
 );
 
-CREATE INDEX responses_index ON responses (id_doc, status_code, ts)
+CREATE INDEX responses_index ON responses (id_doc, cmd_name, ts)
     WHERE ts IS NULL;
