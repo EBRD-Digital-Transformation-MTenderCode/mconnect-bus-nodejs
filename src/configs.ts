@@ -4,6 +4,10 @@ import './lib/env';
 
 import { IContractRegisterPayload, TStatusCode } from './types';
 
+export const serviceConfig = {
+  port: +(process.env.SERVICE_PORT || 5000),
+};
+
 const ppBaseUrl = process.env.PP_BASE_URL || '';
 
 const treasuryBaseUrl = process.env.TREASURY_BASE_URL || '';
