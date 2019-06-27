@@ -8,8 +8,9 @@ import { IContractQueueResponseBody, TStatusCode } from '../types';
 export async function fetchContractsQueue(statusCode: TStatusCode): Promise<IContractQueueResponseBody | undefined> {
   try {
     const { data } = await axois(request.getContractsQueueConfig(statusCode));
+
     return data;
-  } catch (e) {
-    logger.error(e);
+  } catch (error) {
+    logger.error(`🗙 Error on fetch contracts queue of status code - ${statusCode}: `, error);
   }
 }

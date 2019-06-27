@@ -6,6 +6,7 @@
   "repository": "https://github.com/mrrotberry/transport-agent",
   "scripts": {
     "start": "tsc && node ./build/app.js",
+    "start:dev": "ts-node src/app.ts",
     "dev": "nodemon",
     "build": "tsc --diagnostics"
   },

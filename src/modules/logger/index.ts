@@ -4,17 +4,34 @@ import 'winston-daily-rotate-file';
 import { loggerConfig } from '../../configs';
 
 const { format, transports } = winston;
-const { combine, timestamp, printf, colorize, json } = format;
+const { combine, timestamp, printf, colorize, align, errors } = format;
+
+const errorFormat = printf(({ timestamp, stack, message }) => {
+  const errorObject = {
+    message: {
+      errors: [
+        {
+          code: '',
+          description: message,
+        },
+      ],
+    },
+    timestamp,
+    stack,
+  };
+
+  return JSON.stringify(errorObject, null, 2);
+});
 
 const logger = winston.createLogger({
-  format: combine(timestamp(), json({ space: 2 })),
+  format: timestamp({
+    format: 'DD-MM-YYYY HH:mm:ss',
+  }),
   transports: [
     new transports.Console({
       format: combine(
-        timestamp({
-          format: 'DD-MM-YYYY HH:mm:ss',
-        }),
         colorize({ all: true }),
+        align(),
         printf(({ level, message, timestamp }) => `${level}: ${timestamp} --> ${message}`),
       ),
     }),
@@ -23,9 +40,10 @@ const logger = winston.createLogger({
       level: 'error',
       dirname: './logs',
       filename: 'errors-%DATE%.log',
-      datePattern: 'YYYY-MM-DD-HH:mm',
+      datePattern: 'YYYY-MM-DD',
       maxsize: `${loggerConfig.maxFileSizeMb}mb`,
       maxFiles: `${loggerConfig.maxFilesSaveDays}d`,
+      format: combine(errors({ stack: true }), errorFormat),
     }),
   ],
 });

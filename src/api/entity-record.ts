@@ -1,6 +1,9 @@
 import axois from 'axios';
 import { request } from '../configs';
 
+import logger from '../modules/logger';
+
+// @TODO need add type for IRecord and for other entity
 import { IAcRecord } from '../types';
 
 export async function fetchEntityRecord(cpid: string, ocid: string): Promise<IAcRecord | undefined> {
@@ -8,7 +11,7 @@ export async function fetchEntityRecord(cpid: string, ocid: string): Promise<IAc
     const { data } = await axois(request.getEntityRecordConfig(cpid, ocid));
 
     return data;
-  } catch (e) {
-    console.log('!!!ERROR', e);
+  } catch (error) {
+    logger.error(`🗙 Error on fetch entity with ocid - ${ocid}: `, error);
   }
 }

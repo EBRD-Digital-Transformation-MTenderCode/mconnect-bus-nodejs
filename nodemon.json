@@ -2,11 +2,12 @@
   "ignore": [
     ".git",
     "node_modules",
-    ".idea"
+    ".idea",
+    "logs"
   ],
   "watch": [
     "src"
   ],
-  "exec": "npm start",
+  "exec": "npm run start:dev",
   "ext": "ts"
 }

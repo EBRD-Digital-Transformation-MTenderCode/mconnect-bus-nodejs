@@ -160,8 +160,8 @@ export default class Scheduler {
     }
   }
 
-  async run() {
-    logger.info('✔️Scheduler is running');
+  async start() {
+    logger.info('✔️Scheduler started');
 
     setInterval(async () => {
       try {
