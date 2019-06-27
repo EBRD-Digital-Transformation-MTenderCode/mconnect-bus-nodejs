@@ -53,19 +53,19 @@ const pgPromiseInst: IMain = pgPromise({
     } = dbConfig.tables;
 
     obj.insertContractToRequests = ({ cmd_id, cmd_name, message, ts }) => {
-      return obj.none(`INSERT INTO ${requestsTable}(cmd_id, cmd_name, message, ts) VALUES (${cmd_id}, ${cmd_name}, ${JSON.stringify(message)}, to_timestamp(${tsToPgTs(+ts)}))`);
+      return obj.none(`INSERT INTO ${requestsTable}(cmd_id, cmd_name, message, ts) VALUES ('${cmd_id}', '${cmd_name}', '${JSON.stringify(message)}', to_timestamp(${tsToPgTs(+ts)}))`);
     };
 
     obj.insertContractToTreasuryRequests = ({ id_doc, message }) => {
-      return obj.none(`INSERT INTO ${treasuryRequestsTable}(id_doc, message) VALUES (${id_doc}, ${JSON.stringify(message)})`);
+      return obj.none(`INSERT INTO ${treasuryRequestsTable}(id_doc, message) VALUES ('${id_doc}', '${JSON.stringify(message)}')`);
     };
 
     obj.insertContractToTreasureResponses = ({ id_doc, status_code, message, ts_in }) => {
-      return obj.none(`INSERT INTO ${treasuryResponsesTable}(id_doc, status_code, message, ts_in) VALUES (${id_doc}, ${status_code}, ${JSON.stringify(message)}, to_timestamp(${tsToPgTs(+ts_in)}))`);
+      return obj.none(`INSERT INTO ${treasuryResponsesTable}(id_doc, status_code, message, ts_in) VALUES ('${id_doc}', '${status_code}', '${JSON.stringify(message)}', to_timestamp(${tsToPgTs(+ts_in)}))`);
     };
 
     obj.insertContractToResponses = ({ id_doc, cmd_id, cmd_name, message }) => {
-      return obj.none(`INSERT INTO ${responsesTable}(id_doc, cmd_id, cmd_name, message) VALUES (${id_doc}, ${cmd_id}, ${cmd_name}, ${JSON.stringify(message)})`);
+      return obj.none(`INSERT INTO ${responsesTable}(id_doc, cmd_id, cmd_name, message) VALUES ('${id_doc}', '${cmd_id}', '${cmd_name}', '${JSON.stringify(message)}')`);
     };
 
     obj.getNotCommittedContracts = () => {
@@ -92,7 +92,6 @@ const pgPromiseInst: IMain = pgPromise({
 
     obj.contractIsExist = (table: string, {field, value}: {field: string, value: string | null | boolean}) => {
       const query = `SELECT EXISTS (SELECT 1 FROM ${table} WHERE ${field} = ${typeof value === 'string' ? `'${value}'`: value } LIMIT 1)`;
-      logger.warn(query);
       return obj.one(query);
     };
 

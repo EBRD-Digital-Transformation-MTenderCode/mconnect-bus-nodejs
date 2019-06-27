@@ -126,7 +126,7 @@ export default class Scheduler {
       if (treasuryContract.status !== statusCode) return;  // @TODO log error for not exist contract!!!
       if (this.contractIdPattern.test(contractId)) return;
 
-      const sentContract = await db.contractIsExist(dbConfig.tables.treasuryRequests, {field: 'dok_id', value: contractId});
+      const sentContract = await db.contractIsExist(dbConfig.tables.treasuryRequests, {field: 'id_doc', value: contractId});
 
       if (!sentContract.exists) return; // @TODO log error for not exist contract!!!
 

@@ -157,10 +157,20 @@ export default class Registrator {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
-      const sentContract = await db.contractIsExist(dbConfig.tables.requests, {field: 'cmd_id', value: messageData.id});
+      const sentContract = await db.contractIsExist(dbConfig.tables.requests, {
+        field: 'cmd_id',
+        value: messageData.id,
+      });
 
       if (sentContract.exists) {
-        logger.info(`Contract with id - ${messageData.data.ocid} is already exists in request table`);
+        logger.warn(`Contract with id - ${messageData.data.ocid} is already exists in request table`);
+        return;
+      }
+
+      const payload = await this.generateRegistrationPayload(messageData);
+
+      if (!payload) {
+        logger.error(`Failed generate payload for contract register for - ${messageData.data.ocid}`);
         return;
       }
 
@@ -170,13 +180,6 @@ export default class Registrator {
         message: messageData,
         ts: Date.now(),
       });
-
-      const payload = await this.generateRegistrationPayload(messageData);
-
-      if (!payload) {
-        logger.error(`Failed generate payload for contract register for - ${messageData.data.ocid}`);
-        return;
-      }
 
       const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
 
@@ -212,7 +215,7 @@ export default class Registrator {
           messages: JSON.stringify(kafkaMessageOut),
         },
       ], async (err) => {
-        if (err) return logger.error('Error send message to kafka of contract validation launched', err);
+        if (err) return logger.error('Error send message to kafka of contract validation launched ', err);
 
         await db.updateContract({
           table: dbConfig.tables.responses,
@@ -224,7 +227,7 @@ export default class Registrator {
       });
 
     } catch (e) {
-      logger.error('Error of register contract', e);
+      logger.error('Error of register contract ', e);
     }
   }
 
@@ -237,7 +240,10 @@ export default class Registrator {
 
         await fetchContractRegister(row.message);
 
-        const sentContract = await db.contractIsExist(dbConfig.tables.responses, {field: 'dok_id', value: contractId});
+        const sentContract = await db.contractIsExist(dbConfig.tables.responses, {
+          field: 'id_doc',
+          value: contractId,
+        });
 
         const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
 
@@ -273,7 +279,7 @@ export default class Registrator {
             messages: JSON.stringify(kafkaMessageOut),
           },
         ], async (err) => {
-          if (err) return logger.error('Error send message to kafka of contract validation launched', err);
+          if (err) return logger.error('Error send message to kafka of contract validation launched ', err);
 
           await db.updateContract({
             table: dbConfig.tables.responses,
@@ -285,17 +291,19 @@ export default class Registrator {
         });
       }
     } catch (e) {
-      logger.error('Error of register not registered contracts', e);
+      logger.error('Error of register not registered contracts ', e);
     }
   }
 
   async start() {
-    logger.info('✔ Contracts Registrator started');
+    logger.info('✔ Registrator started');
 
     try {
       await this.registerNotRegisteredContracts();
 
-      InConsumer.on('message', this.registerContract);
+      InConsumer.on('message', (message: IMessage) => {
+        this.registerContract(message)
+      });
     } catch (e) {
       logger.error('Error on start registrator', e);
     }
