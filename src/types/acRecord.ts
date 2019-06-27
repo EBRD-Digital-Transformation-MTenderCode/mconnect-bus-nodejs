@@ -1,6 +1,7 @@
 export interface IAcRecord {
   [key: string]: any,
 
+  datePublished: string,
   releases: IRelease[]
 }
 

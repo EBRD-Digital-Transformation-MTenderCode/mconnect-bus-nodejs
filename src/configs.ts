@@ -2,7 +2,7 @@ import { AxiosRequestConfig } from 'axios';
 
 import './lib/env';
 
-import { IContractRegisterRequestBody, TStatusCode } from './types';
+import { IContractRegisterPayload, TStatusCode } from './types';
 
 const ppBaseUrl = process.env.PP_BASE_URL || '';
 
@@ -38,20 +38,20 @@ export const dbConfig = {
 };
 
 export const request = {
-  getEntityRelease: (cpid: string, ocid: string): AxiosRequestConfig => ({
+  getEntityRecordConfig: (cpid: string, ocid: string): AxiosRequestConfig => ({
     method: 'get',
     url: `${ppBaseUrl}/tenders/${cpid}/${ocid}`,
   }),
-  postContractRegister: (data: IContractRegisterRequestBody): AxiosRequestConfig => ({
+  postContractRegisterConfig: (data: IContractRegisterPayload): AxiosRequestConfig => ({
     method: 'post',
     url: `${treasuryBaseUrl}/api/v1/contract/register`,
     data,
   }),
-  getContractsQueue: (statusNumber: TStatusCode): AxiosRequestConfig => ({
+  getContractsQueueConfig: (statusNumber: TStatusCode): AxiosRequestConfig => ({
     method: 'get',
     url: `${treasuryBaseUrl}/api/v1/contract/queue?status=${statusNumber}`,
   }),
-  postCommitContract: (contractId: string): AxiosRequestConfig => ({
+  postCommitContractConfig: (contractId: string): AxiosRequestConfig => ({
     method: 'post',
     url: `${treasuryBaseUrl}/api/v1/contract/confirm?id_dok=${contractId}`,
   }),

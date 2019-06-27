@@ -1,25 +1,17 @@
 import * as Kafka from 'kafka-node';
 
-import { Client } from './client';
+import logger from '../logger';
 
-import { kafkaInConsumerConfig } from '../../configs';
+import { kafkaClientConfig, kafkaInConsumerConfig } from '../../configs';
 
-// import { saveIn } from '../dataBase/controllers';
-
-const InConsumer = new Kafka.Consumer(
-  Client, [{
-    topic: kafkaInConsumerConfig.inTopic,
-  }], {
+export const InConsumer = new Kafka.ConsumerGroup(
+  {
+    kafkaHost: kafkaClientConfig.kafkaHost,
     groupId: kafkaInConsumerConfig.inGroupId,
-    autoCommit: false
-  },
+    protocol: ['roundrobin'],
+    connectOnReady: true,
+  }, kafkaInConsumerConfig.inTopic,
 );
 
-// InConsumer.on('message', saveIn);
-
-InConsumer.on('error', function(err: string) {
-  console.log('!!!KAFKA_ERROR_Consumer', err);
-});
-
-
-export default InConsumer;
+InConsumer.on('connect', () => logger.info('✔ Kafka Consumer connected'));
+InConsumer.on('error', () => logger.error('Kafka Consumer not connected'));

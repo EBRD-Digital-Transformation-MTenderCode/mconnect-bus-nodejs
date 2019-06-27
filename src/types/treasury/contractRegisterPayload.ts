@@ -1,4 +1,4 @@
-export interface IContractRegisterRequestBody {
+export interface IContractRegisterPayload {
   header: IHeader,
   benef: IBenef[],
   details: IDetail[]

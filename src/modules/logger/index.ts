@@ -12,7 +12,7 @@ const logger = winston.createLogger({
     new transports.Console({
       format: combine(
         timestamp({
-          format: 'DD-MM-YYYY HH:mm:ss.ms',
+          format: 'DD-MM-YYYY HH:mm:ss',
         }),
         colorize({ all: true }),
         printf(({ level, message, timestamp }) => `${level}: ${timestamp} --> ${message}`),

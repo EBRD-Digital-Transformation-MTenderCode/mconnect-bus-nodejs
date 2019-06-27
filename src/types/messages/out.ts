@@ -1,8 +1,9 @@
+import { TCommandName } from './index';
 import { TStatusCode } from '../treasury';
 
 export interface IOut {
   id: string,
-  command: string,
+  command: TCommandName,
   data: IDataOut,
   version: string
 }
@@ -10,8 +11,8 @@ export interface IOut {
 export interface IDataOut {
   cpid: string,
   ocid: string,
-  verification: IVerificationOut,
-  dateMet: string,
+  verification?: IVerificationOut,
+  dateMet?: string,
   regData?: IRegDataOut
 }
 

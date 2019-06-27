@@ -6,25 +6,21 @@ import logger from '../logger';
 
 import { fetchContractsQueue, fetchContractCommit } from '../../api';
 
-import { TStatusCode, IOut, ITreasuryContract } from '../../types';
+import { TStatusCode, TCommandName, IOut, ITreasuryContract } from '../../types';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
-interface IStatusCodesMapToCommandName {
-  '3004': 'proceedVerifiedAC',
-  '3005': 'proceedAcClarification',
-  '3006': 'proceedAcRejection',
-}
+type IStatusCodesMapToCommandName = {
+  [key in TStatusCode]: TCommandName;
+};
 
 export default class Scheduler {
   private readonly interval: number;
-  private readonly statusCodes: TStatusCode[];
   private readonly contractIdPattern: RegExp;
   private readonly statusCodesMapToCommandName: IStatusCodesMapToCommandName;
 
   constructor(interval: number) {
     this.interval = interval;
-    this.statusCodes = ['3004', '3005', '3006'];
     this.contractIdPattern = /^ocds-([a-z]|[0-9]){6}-[A-Z]{2}-[0-9]{13}-AC-[0-9]{13}-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
     this.statusCodesMapToCommandName = {
       '3004': 'proceedVerifiedAC',
@@ -87,7 +83,7 @@ export default class Scheduler {
 
   private async sendNotSentResponses() {
     try {
-      const notSentContractsMessages = await db.getNotSentContractsMessages();
+      const notSentContractsMessages = await db.getNotSentContractsMessages({ launch: false });
 
       for (const row of notSentContractsMessages) {
         await this.sendResponse(row.id_doc, row.message);
@@ -130,9 +126,9 @@ export default class Scheduler {
       if (treasuryContract.status !== statusCode) return;  // @TODO log error for not exist contract!!!
       if (this.contractIdPattern.test(contractId)) return;
 
-      const checkResult = await db.contractIsExist(dbConfig.tables.treasuryRequests, contractId);
+      const sentContract = await db.contractIsExist(dbConfig.tables.treasuryRequests, {field: 'dok_id', value: contractId});
 
-      if (!checkResult.exists) return; // @TODO log error for not exist contract!!!
+      if (!sentContract.exists) return; // @TODO log error for not exist contract!!!
 
       const { status } = treasuryContract;
 
@@ -173,7 +169,7 @@ export default class Scheduler {
 
         await this.sendNotSentResponses();
 
-        for (const statusCode of this.statusCodes) {
+        for (const statusCode of Object.keys(this.statusCodesMapToCommandName) as TStatusCode[]) {
           const contractsQueue = await fetchContractsQueue(statusCode);
 
           if (!contractsQueue) continue;

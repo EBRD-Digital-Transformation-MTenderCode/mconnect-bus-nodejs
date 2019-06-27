@@ -1,7 +1,7 @@
-import { IOut } from '../messages';
+import { IContractRegisterPayload } from '../treasury';
 
 export interface ITreasuryRequestsRow {
   id_doc: string,
-  message: IOut,
+  message: IContractRegisterPayload,
   ts?: number | null
 }
