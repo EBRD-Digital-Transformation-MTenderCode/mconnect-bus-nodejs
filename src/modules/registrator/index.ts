@@ -1,10 +1,10 @@
 import { v4 as uuid } from 'uuid';
+import { Message as IMessage } from 'kafka-node';
 
 import { fetchContractRegister, fetchEntityRecord } from '../../api';
 
 import db from '../../lib/dataBase';
 import { InConsumer, OutProducer } from '../../lib/kafka';
-import { Message as IMessage } from 'kafka-node';
 import logger from '../../lib/logger';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
@@ -148,8 +148,8 @@ export default class Registrator {
       if (avansValue.amount) contractRegisterPayload.header.avans = avansValue.amount;
 
       return contractRegisterPayload;
-    } catch (e) {
-      logger.error('Error form generation payload for register contract'), e;
+    } catch (error) {
+      logger.error('🗙 Error in registrator generateRegistrationPayload: ', error);
     }
   }
 
@@ -214,8 +214,8 @@ export default class Registrator {
           topic: kafkaOutProducerConfig.outTopic,
           messages: JSON.stringify(kafkaMessageOut),
         },
-      ], async (err) => {
-        if (err) return logger.error('Error send message to kafka of contract validation launched ', err);
+      ], async (error) => {
+        if (error) return logger.error('🗙 Error in registrator registerContract-producer: ', error);
 
         await db.updateRow({
           table: dbConfig.tables.responses,
@@ -226,8 +226,8 @@ export default class Registrator {
         });
       });
 
-    } catch (e) {
-      logger.error('Error of register contract ', e);
+    } catch (error) {
+      logger.error('🗙 Error in registrator registerContract: ', error);
     }
   }
 
@@ -278,8 +278,8 @@ export default class Registrator {
             topic: kafkaOutProducerConfig.outTopic,
             messages: JSON.stringify(kafkaMessageOut),
           },
-        ], async (err) => {
-          if (err) return logger.error('Error send message to kafka of contract validation launched ', err);
+        ], async (error) => {
+          if (error) return logger.error('🗙 Error in registrator registerNotRegisteredContracts-producer: ', error);
 
           await db.updateRow({
             table: dbConfig.tables.responses,
@@ -290,8 +290,8 @@ export default class Registrator {
           });
         });
       }
-    } catch (e) {
-      logger.error('Error of register not registered contracts ', e);
+    } catch (error) {
+      logger.error('🗙 Error in registrator registerNotRegisteredContracts: ', error);
     }
   }
 
@@ -301,11 +301,9 @@ export default class Registrator {
     try {
       await this.registerNotRegisteredContracts();
 
-      InConsumer.on('message', (message: IMessage) => {
-        this.registerContract(message)
-      });
-    } catch (e) {
-      logger.error('Error on start registrator', e);
+      InConsumer.on('message', this.registerContract);
+    } catch (error) {
+      logger.error('🗙 Error in registrator start: ', error);
     }
   }
 }
