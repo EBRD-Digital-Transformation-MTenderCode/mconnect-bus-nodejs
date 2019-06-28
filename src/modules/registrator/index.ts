@@ -170,8 +170,6 @@ export default class Registrator {
 
       const payload = await this.generateRegistrationPayload(messageData);
 
-      logger.info(JSON.stringify(payload, null, 2));
-
       if (!payload) {
         logger.error(`Failed generate payload for contract register for - ${messageData.data.ocid}`);
         return;
@@ -189,8 +187,6 @@ export default class Registrator {
       await db.insertToTreasuryRequests({ id_doc: contractId, message: payload });
 
       const contractIsRegistered = await fetchContractRegister(payload);
-
-      logger.info(JSON.stringify(contractIsRegistered, null, 2));
 
       if (!contractIsRegistered || contractIsRegistered.id_dok !== contractId) {
         logger.error(`Failed register contract - ${messageData.data.ocid}`);
@@ -213,6 +209,8 @@ export default class Registrator {
           ts: Date.now(),
         },
       });
+
+      logger.info(`Contract - ${contractId} was registered`);
 
       OutProducer.send([
         {
@@ -241,6 +239,8 @@ export default class Registrator {
       const notRegisteredContracts = await db.getNotRegistereds();
 
       for (const row of notRegisteredContracts) {
+        logger.warn(`Not registered contract - ${row.id_doc}`);
+
         const contractId = row.id_doc;
 
         await fetchContractRegister(row.message);
@@ -277,6 +277,8 @@ export default class Registrator {
             },
           });
         }
+
+        logger.info(`Contract - ${contractId} was registered`);
 
         OutProducer.send([
           {
