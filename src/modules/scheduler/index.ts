@@ -35,7 +35,7 @@ export default class Scheduler {
 
       if (!res) return;
 
-      await db.updateContract({
+      await db.updateRow({
         table: dbConfig.tables.treasuryResponses,
         contractId,
         columns: {
@@ -59,7 +59,7 @@ export default class Scheduler {
       if (err) return console.log('!!!KAFKA_ERROR_Producer send message', err);
 
       // Update timestamp commit in treasure_in table
-      await db.updateContract({
+      await db.updateRow({
         table: dbConfig.tables.responses,
         contractId,
         columns: {
@@ -71,7 +71,7 @@ export default class Scheduler {
 
   private async commitNotCommittedContracts() {
     try {
-      const notCommittedContracts = await db.getNotCommittedContracts();
+      const notCommittedContracts = await db.getNotCommitteds();
 
       for (const row of notCommittedContracts) {
         await this.commitContract(row.id_doc);
@@ -83,7 +83,7 @@ export default class Scheduler {
 
   private async sendNotSentResponses() {
     try {
-      const notSentContractsMessages = await db.getNotSentContractsMessages({ launch: false });
+      const notSentContractsMessages = await db.getNotSentMessages({ launch: false });
 
       for (const row of notSentContractsMessages) {
         await this.sendResponse(row.id_doc, row.message);
@@ -126,14 +126,14 @@ export default class Scheduler {
       if (treasuryContract.status !== statusCode) return;  // @TODO log error for not exist contract!!!
       if (this.contractIdPattern.test(contractId)) return;
 
-      const sentContract = await db.contractIsExist(dbConfig.tables.treasuryRequests, {field: 'id_doc', value: contractId});
+      const sentContract = await db.isExist(dbConfig.tables.treasuryRequests, { field: 'id_doc', value: contractId });
 
       if (!sentContract.exists) return; // @TODO log error for not exist contract!!!
 
       const { status } = treasuryContract;
 
       // Save to treasure_responses table
-      db.insertContractToTreasureResponses({
+      await db.insertToTreasureResponses({
         id_doc: contractId,
         status_code: status,
         message: treasuryContract,
@@ -147,7 +147,7 @@ export default class Scheduler {
       const kafkaMessageOut = this.generateKafkaMessageOut(treasuryContract);
 
       // Save to responses table
-      await db.insertContractToResponses({
+      await db.insertToResponses({
         id_doc: contractId,
         cmd_id: kafkaMessageOut.id,
         cmd_name: kafkaMessageOut.command,
@@ -160,33 +160,37 @@ export default class Scheduler {
     }
   }
 
+  private async run() {
+    try {
+      await this.commitNotCommittedContracts();
+
+      await this.sendNotSentResponses();
+
+      for (const statusCode of Object.keys(this.statusCodesMapToCommandName) as TStatusCode[]) {
+        const contractsQueue = await fetchContractsQueue(statusCode);
+
+        if (!contractsQueue) continue;
+        if (!contractsQueue.contract) continue;
+
+        if (Array.isArray(contractsQueue.contract)) {
+          for (const treasuryContract of contractsQueue.contract) {
+            await this.doContractProcessing(statusCode, treasuryContract);
+          }
+        }
+        else {
+          await this.doContractProcessing(statusCode, contractsQueue.contract);
+        }
+      }
+    } catch (error) {
+      console.log('!!!ERROR', error);
+    }
+  }
+
   async start() {
     logger.info('✔️Scheduler started');
 
-    setInterval(async () => {
-      try {
-        await this.commitNotCommittedContracts();
+    await this.run();
 
-        await this.sendNotSentResponses();
-
-        for (const statusCode of Object.keys(this.statusCodesMapToCommandName) as TStatusCode[]) {
-          const contractsQueue = await fetchContractsQueue(statusCode);
-
-          if (!contractsQueue) continue;
-          if (!contractsQueue.contract) continue;
-
-          if (Array.isArray(contractsQueue.contract)) {
-            for (const treasuryContract of contractsQueue.contract) {
-              await this.doContractProcessing(statusCode, treasuryContract);
-            }
-          }
-          else {
-            this.doContractProcessing(statusCode, contractsQueue.contract);
-          }
-        }
-      } catch (error) {
-        console.log('!!!ERROR', error);
-      }
-    }, this.interval);
+    setInterval(() => this.run, this.interval);
   }
 }

@@ -157,7 +157,7 @@ export default class Registrator {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
-      const sentContract = await db.contractIsExist(dbConfig.tables.requests, {
+      const sentContract = await db.isExist(dbConfig.tables.requests, {
         field: 'cmd_id',
         value: messageData.id,
       });
@@ -174,7 +174,7 @@ export default class Registrator {
         return;
       }
 
-      await db.insertContractToRequests({
+      await db.insertToRequests({
         cmd_id: messageData.id,
         cmd_name: messageData.command,
         message: messageData,
@@ -183,7 +183,7 @@ export default class Registrator {
 
       const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
 
-      await db.insertContractToTreasuryRequests({ id_doc: contractId, message: payload });
+      await db.insertToTreasuryRequests({ id_doc: contractId, message: payload });
 
       const contractIsRegistered = await fetchContractRegister(payload);
 
@@ -194,14 +194,14 @@ export default class Registrator {
 
       const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
 
-      await db.insertContractToResponses({
+      await db.insertToResponses({
         id_doc: contractId,
         cmd_id: kafkaMessageOut.id,
         cmd_name: kafkaMessageOut.command,
         message: kafkaMessageOut,
       });
 
-      await db.updateContract({
+      await db.updateRow({
         table: dbConfig.tables.treasuryRequests,
         contractId,
         columns: {
@@ -217,7 +217,7 @@ export default class Registrator {
       ], async (err) => {
         if (err) return logger.error('Error send message to kafka of contract validation launched ', err);
 
-        await db.updateContract({
+        await db.updateRow({
           table: dbConfig.tables.responses,
           contractId,
           columns: {
@@ -233,14 +233,14 @@ export default class Registrator {
 
   private async registerNotRegisteredContracts() {
     try {
-      const notRegisteredContracts = await db.getNotRegisteredContracts();
+      const notRegisteredContracts = await db.getNotRegistereds();
 
       for (const row of notRegisteredContracts) {
         const contractId = row.id_doc;
 
         await fetchContractRegister(row.message);
 
-        const sentContract = await db.contractIsExist(dbConfig.tables.responses, {
+        const sentContract = await db.isExist(dbConfig.tables.responses, {
           field: 'id_doc',
           value: contractId,
         });
@@ -248,7 +248,7 @@ export default class Registrator {
         const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
 
         if (sentContract.exists) {
-          await db.updateContract({
+          await db.updateRow({
             table: dbConfig.tables.treasuryRequests,
             contractId,
             columns: {
@@ -257,14 +257,14 @@ export default class Registrator {
           });
         }
         else {
-          await db.insertContractToResponses({
+          await db.insertToResponses({
             id_doc: contractId,
             cmd_id: kafkaMessageOut.id,
             cmd_name: kafkaMessageOut.command,
             message: kafkaMessageOut,
           });
 
-          await db.updateContract({
+          await db.updateRow({
             table: dbConfig.tables.treasuryRequests,
             contractId,
             columns: {
@@ -281,7 +281,7 @@ export default class Registrator {
         ], async (err) => {
           if (err) return logger.error('Error send message to kafka of contract validation launched ', err);
 
-          await db.updateContract({
+          await db.updateRow({
             table: dbConfig.tables.responses,
             contractId,
             columns: {
