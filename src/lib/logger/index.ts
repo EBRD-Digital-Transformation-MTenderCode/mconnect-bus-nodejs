@@ -11,7 +11,7 @@ const errorFormat = printf(({ timestamp, stack, message }) => {
     message: {
       errors: [
         {
-          code: '',
+          code: '400.001.001.001',
           description: message,
         },
       ],
