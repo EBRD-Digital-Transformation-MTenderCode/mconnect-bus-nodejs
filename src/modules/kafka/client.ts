@@ -12,4 +12,4 @@ export const Client = new Kafka.KafkaClient({
 
 Client.on('ready', () => logger.info( '✔️Kafka Client ready'));
 
-Client.on('error', (error) => console.log(`!!!KAFKA_ERROR_Client ${error.message}`));
+Client.on('error', error => logger.error('🗙 Error kafka client: ', error));

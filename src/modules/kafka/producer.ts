@@ -1,11 +1,11 @@
 import * as Kafka from 'kafka-node';
 
-import logger from '../logger';
-
 import { Client } from './client';
+
+import logger from '../logger';
 
 export const OutProducer = new Kafka.HighLevelProducer(Client);
 
 OutProducer.on('ready', () => logger.info( '✔️Kafka Producer ready'));
 
-OutProducer.on('error', (error) => console.log(`!!!KAFKA_ERROR_Producer ${error.message}`));
+OutProducer.on('error', error => logger.error('🗙 Error kafka producer: ', error));

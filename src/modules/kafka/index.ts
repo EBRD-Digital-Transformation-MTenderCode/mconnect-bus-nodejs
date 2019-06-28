@@ -1,3 +1,3 @@
 export * from './client';
-export * from './in';
-export * from './out';
+export * from './consumer';
+export * from './producer';
