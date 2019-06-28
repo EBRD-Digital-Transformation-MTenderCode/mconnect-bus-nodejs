@@ -10,20 +10,32 @@ import logger from '../../lib/logger';
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
 import {
-  IIn,
-  IOut,
   IAcRecord,
-  IRelatedProcess,
-  IParty,
   IAdditionalIdentifier,
-  ITransaction,
-  ITreasuryBudgetSources,
   IBudgetAllocation,
   IContractRegisterPayload,
   IDocument,
+  IIn,
+  IOut,
+  IParty,
+  IRelatedProcess,
+  ITransaction,
+  ITreasuryBudgetSources,
 } from '../../types';
 
 export default class Registrator {
+
+  async start() {
+    logger.info('✔ Registrator started');
+
+    try {
+      await this.registerNotRegisteredContracts();
+
+      InConsumer.on('message', (message: IMessage) => this.registerContract(message));
+    } catch (error) {
+      logger.error('🗙 Error in registrator start: ', error);
+    }
+  }
 
   private generateKafkaMessageOut(contractId: string): IOut {
     const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
@@ -299,18 +311,6 @@ export default class Registrator {
       }
     } catch (error) {
       logger.error('🗙 Error in registrator registerNotRegisteredContracts: ', error);
-    }
-  }
-
-  async start() {
-    logger.info('✔ Registrator started');
-
-    try {
-      await this.registerNotRegisteredContracts();
-
-      InConsumer.on('message', (message: IMessage) => this.registerContract(message));
-    } catch (error) {
-      logger.error('🗙 Error in registrator start: ', error);
     }
   }
 }

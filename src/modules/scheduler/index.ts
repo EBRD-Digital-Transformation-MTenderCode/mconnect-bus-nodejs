@@ -4,11 +4,11 @@ import db from '../../lib/dataBase';
 import { OutProducer } from '../../lib/kafka';
 import logger from '../../lib/logger';
 
-import { fetchContractsQueue, fetchContractCommit } from '../../api';
+import { fetchContractCommit, fetchContractsQueue } from '../../api';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
-import { TStatusCode, TCommandName, IOut, ITreasuryContract } from '../../types';
+import { IOut, ITreasuryContract, TCommandName, TStatusCode } from '../../types';
 
 type IStatusCodesMapToCommandName = {
   [key in TStatusCode]: TCommandName;
@@ -27,6 +27,14 @@ export default class Scheduler {
       '3005': 'proceedAcClarification',
       '3006': 'proceedAcRejection',
     };
+  }
+
+  async start() {
+    logger.info('✔ Scheduler started');
+
+    await this.run();
+
+    setInterval(() => this.run, this.interval);
   }
 
   private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
@@ -182,13 +190,5 @@ export default class Scheduler {
     } catch (error) {
       logger.error('🗙 Error in scheduler run: ', error);
     }
-  }
-
-  async start() {
-    logger.info('✔️Scheduler started');
-
-    await this.run();
-
-    setInterval(() => this.run, this.interval);
   }
 }

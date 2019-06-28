@@ -1,4 +1,4 @@
-import { IIn } from '../messages'
+import { IIn } from '../messages';
 
 export interface IRequestsRow {
   cmd_id: string,

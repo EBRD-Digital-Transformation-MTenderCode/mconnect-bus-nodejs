@@ -1,10 +1,11 @@
-FROM nikolaik/python-nodejs:latest
+FROM node:12.4.0-slim
 
 ENV NODE_ENV=production
 
 WORKDIR /transport-agent/
 
-COPY package*.json tsconfig.json .env src ./
+COPY package*.json tsconfig.json .env ./
+COPY src ./src
 
 EXPOSE 5000
 

@@ -10,6 +10,6 @@ export const Client = new Kafka.KafkaClient({
   requestTimeout: kafkaClientConfig.requestTimeout,
 });
 
-Client.on('ready', () => logger.info( '✔️Kafka Client ready'));
+Client.on('ready', () => logger.info('✔ Kafka Client ready'));
 
 Client.on('error', error => logger.error('🗙 Error kafka client: ', error));

@@ -1,4 +1,4 @@
-import { TStatusCode, ITreasuryContract } from '../treasury';
+import { ITreasuryContract, TStatusCode } from '../treasury';
 
 export interface ITreasuryResponsesRow {
   id_doc: string,

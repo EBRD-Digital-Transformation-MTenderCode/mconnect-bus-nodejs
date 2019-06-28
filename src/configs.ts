@@ -1,7 +1,6 @@
-import { AxiosRequestConfig } from 'axios';
-
 import './lib/env';
 
+import { AxiosRequestConfig } from 'axios';
 import { IContractRegisterPayload, TStatusCode } from './types';
 
 export const serviceConfig = {

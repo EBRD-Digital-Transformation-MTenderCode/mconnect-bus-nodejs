@@ -3,7 +3,7 @@ import Scheduler from './modules/scheduler';
 import Registrator from './modules/registrator';
 import logger from './lib/logger';
 
-logger.info(`✔️mConnect Bus App is running`);
+logger.info('✔ mConnect Bus App is running');
 
 const server = new Server();
 

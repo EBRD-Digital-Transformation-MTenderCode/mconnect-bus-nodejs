@@ -1,13 +1,11 @@
 export interface IAcRecord {
-  [key: string]: any,
-
   datePublished: string,
   releases: IRelease[]
+
+  [key: string]: any,
 }
 
 export interface IRelease {
-  [key: string]: any,
-
   planning: {
     implementation: {
       transactions: ITransaction[]
@@ -21,6 +19,8 @@ export interface IRelease {
   contracts: IContract[],
   parties: IParty[],
   relatedProcesses: IRelatedProcess[]
+
+  [key: string]: any,
 }
 
 export interface ITransaction {
@@ -53,8 +53,6 @@ export interface IBudgetSource {
 }
 
 export interface IContract {
-  [key: string]: any,
-
   id: string,
   date: string,
   awardId: string,
@@ -73,6 +71,8 @@ export interface IContract {
     amountNet: number,
     valueAddedTaxIncluded: boolean
   }
+
+  [key: string]: any,
 }
 
 export interface IDocument {
@@ -85,8 +85,6 @@ export interface IDocument {
 }
 
 export interface IParty {
-  [key: string]: any,
-
   id: string,
   name: string,
   identifier: {
@@ -101,6 +99,8 @@ export interface IParty {
     bankAccounts: IBankAccount[]
   },
   roles: ('payee' | 'supplier' | 'buyer' | 'payer')[]
+
+  [key: string]: any,
 }
 
 export interface IAdditionalIdentifier {
@@ -110,8 +110,6 @@ export interface IAdditionalIdentifier {
 }
 
 export interface IBankAccount {
-  [key: string]: any,
-
   description: string,
   bankName: string,
   identifier: {
@@ -122,6 +120,8 @@ export interface IBankAccount {
     scheme: string,
     id: string,
   }
+
+  [key: string]: any,
 }
 
 export interface IRelatedProcess {

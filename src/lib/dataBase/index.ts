@@ -1,4 +1,4 @@
-import pgPromise, { IMain, IDatabase } from 'pg-promise';
+import pgPromise, { IDatabase, IMain } from 'pg-promise';
 
 import { extentions, IExtensions } from './extensions';
 
@@ -18,7 +18,7 @@ const pgPromiseInst: IMain = pgPromise({
     obj.updateRow = extentions.updateRow;
     obj.isExist = extentions.isExist;
     obj.getRow = extentions.getRow;
-  }
+  },
 });
 
 const { host, port, database, user, password } = dbConfig;
@@ -32,7 +32,7 @@ const db = pgPromiseInst({
 }) as IDatabase<IExtensions> & IExtensions;
 
 db.connect().then(obj => {
-  logger.info('✔️Connected to database');
+  logger.info('✔ Connected to database');
   obj.done();
 }).catch(error => logger.error('🗙 Error connect to DB: ', error));
 

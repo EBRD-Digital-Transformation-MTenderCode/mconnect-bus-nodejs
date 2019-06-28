@@ -2,7 +2,6 @@ import axois from 'axios';
 import { request } from '../configs';
 
 import logger from '../lib/logger';
-
 // @TODO need add type for IRecord and for other entity
 import { IAcRecord } from '../types';
 
