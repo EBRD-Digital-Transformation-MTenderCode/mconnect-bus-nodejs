@@ -19,7 +19,8 @@ import {
   ITransaction,
   ITreasuryBudgetSources,
   IBudgetAllocation,
-  IContractRegisterPayload, IDocument,
+  IContractRegisterPayload,
+  IDocument,
 } from '../../types';
 
 export default class Registrator {
@@ -145,7 +146,7 @@ export default class Registrator {
 
       if (buyerBranchesIdentifier.id) contractRegisterPayload.header.pkd_sdiv = buyerBranchesIdentifier.id;
       if (supplierBranchesIdentifier.id) contractRegisterPayload.header.bkd_sdiv = supplierBranchesIdentifier.id;
-      if (avansValue.amount) contractRegisterPayload.header.avans = avansValue.amount;
+      if (avansValue.amount) contractRegisterPayload.header.avans = `${avansValue.amount}`;
 
       return contractRegisterPayload;
     } catch (error) {
@@ -169,6 +170,8 @@ export default class Registrator {
 
       const payload = await this.generateRegistrationPayload(messageData);
 
+      logger.info(JSON.stringify(payload, null, 2));
+
       if (!payload) {
         logger.error(`Failed generate payload for contract register for - ${messageData.data.ocid}`);
         return;
@@ -186,6 +189,8 @@ export default class Registrator {
       await db.insertToTreasuryRequests({ id_doc: contractId, message: payload });
 
       const contractIsRegistered = await fetchContractRegister(payload);
+
+      logger.info(JSON.stringify(contractIsRegistered, null, 2));
 
       if (!contractIsRegistered || contractIsRegistered.id_dok !== contractId) {
         logger.error(`Failed register contract - ${messageData.data.ocid}`);
@@ -301,7 +306,7 @@ export default class Registrator {
     try {
       await this.registerNotRegisteredContracts();
 
-      InConsumer.on('message', this.registerContract);
+      InConsumer.on('message', (message: IMessage) => this.registerContract(message));
     } catch (error) {
       logger.error('🗙 Error in registrator start: ', error);
     }

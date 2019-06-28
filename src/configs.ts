@@ -49,15 +49,18 @@ export const request = {
   postContractRegisterConfig: (data: IContractRegisterPayload): AxiosRequestConfig => ({
     method: 'post',
     url: `${treasuryBaseUrl}/api/v1/contract/register`,
+    timeout: 10000,
     data,
   }),
   getContractsQueueConfig: (statusNumber: TStatusCode): AxiosRequestConfig => ({
     method: 'get',
     url: `${treasuryBaseUrl}/api/v1/contract/queue?status=${statusNumber}`,
+    timeout: 10000,
   }),
   postCommitContractConfig: (contractId: string): AxiosRequestConfig => ({
     method: 'post',
     url: `${treasuryBaseUrl}/api/v1/contract/confirm?id_dok=${contractId}`,
+    timeout: 10000,
   }),
 };
 
