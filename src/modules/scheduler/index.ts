@@ -1,14 +1,14 @@
 import { v4 as uuid } from 'uuid';
 
-import db from '../dataBase';
-import { OutProducer } from '../kafka';
-import logger from '../logger';
+import db from '../../lib/dataBase';
+import { OutProducer } from '../../lib/kafka';
+import logger from '../../lib/logger';
 
 import { fetchContractsQueue, fetchContractCommit } from '../../api';
 
-import { TStatusCode, TCommandName, IOut, ITreasuryContract } from '../../types';
-
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
+
+import { TStatusCode, TCommandName, IOut, ITreasuryContract } from '../../types';
 
 type IStatusCodesMapToCommandName = {
   [key in TStatusCode]: TCommandName;
@@ -27,70 +27,6 @@ export default class Scheduler {
       '3005': 'proceedAcClarification',
       '3006': 'proceedAcRejection',
     };
-  }
-
-  private async commitContract(contractId: string) {
-    try {
-      const res = await fetchContractCommit(contractId);
-
-      if (!res) return;
-
-      await db.updateRow({
-        table: dbConfig.tables.treasuryResponses,
-        contractId,
-        columns: {
-          ts_commit: Date.now(),
-        },
-      });
-
-      return true;
-    } catch (e) {
-      console.log('!!!ERROR', e);
-    }
-  }
-
-  private async sendResponse(contractId: string, kafkaMessageOut: IOut) {
-    OutProducer.send([
-      {
-        topic: kafkaOutProducerConfig.outTopic,
-        messages: JSON.stringify(kafkaMessageOut),
-      },
-    ], async (err) => {
-      if (err) return console.log('!!!KAFKA_ERROR_Producer send message', err);
-
-      // Update timestamp commit in treasure_in table
-      await db.updateRow({
-        table: dbConfig.tables.responses,
-        contractId,
-        columns: {
-          ts: Date.now(),
-        },
-      });
-    });
-  }
-
-  private async commitNotCommittedContracts() {
-    try {
-      const notCommittedContracts = await db.getNotCommitteds();
-
-      for (const row of notCommittedContracts) {
-        await this.commitContract(row.id_doc);
-      }
-    } catch (error) {
-      console.log('!!!ERROR', error);
-    }
-  }
-
-  private async sendNotSentResponses() {
-    try {
-      const notSentContractsMessages = await db.getNotSentMessages({ launch: false });
-
-      for (const row of notSentContractsMessages) {
-        await this.sendResponse(row.id_doc, row.message);
-      }
-    } catch (error) {
-      console.log('!!!ERROR', error);
-    }
   }
 
   private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
@@ -123,16 +59,15 @@ export default class Scheduler {
     try {
       const contractId = treasuryContract.id_dok;
 
-      if (treasuryContract.status !== statusCode) return;  // @TODO log error for not exist contract!!!
+      if (treasuryContract.status !== statusCode) return;
       if (this.contractIdPattern.test(contractId)) return;
 
       const sentContract = await db.isExist(dbConfig.tables.treasuryRequests, { field: 'id_doc', value: contractId });
 
-      if (!sentContract.exists) return; // @TODO log error for not exist contract!!!
+      if (!sentContract.exists) return;
 
       const { status } = treasuryContract;
 
-      // Save to treasure_responses table
       await db.insertToTreasureResponses({
         id_doc: contractId,
         status_code: status,
@@ -140,13 +75,12 @@ export default class Scheduler {
         ts_in: Date.now(),
       });
 
-      // Committed contract and update ts_commit in treasure_responses
       const contractIsCommitted = await this.commitContract(contractId);
+
       if (!contractIsCommitted) return;
 
       const kafkaMessageOut = this.generateKafkaMessageOut(treasuryContract);
 
-      // Save to responses table
       await db.insertToResponses({
         id_doc: contractId,
         cmd_id: kafkaMessageOut.id,
@@ -156,7 +90,71 @@ export default class Scheduler {
 
       await this.sendResponse(contractId, kafkaMessageOut);
     } catch (error) {
-      console.log('!!!ERROR', error);
+      logger.error('🗙 Error in scheduler doContractProcessing: ', error);
+    }
+  }
+
+  private async sendResponse(contractId: string, kafkaMessageOut: IOut) {
+    OutProducer.send([
+      {
+        topic: kafkaOutProducerConfig.outTopic,
+        messages: JSON.stringify(kafkaMessageOut),
+      },
+    ], async error => {
+      if (error) return logger.error('🗙 Error in scheduler producer: ', error);
+
+      // Update timestamp commit in treasure_in table
+      await db.updateRow({
+        table: dbConfig.tables.responses,
+        contractId,
+        columns: {
+          ts: Date.now(),
+        },
+      });
+    });
+  }
+
+  private async sendNotSentResponses() {
+    try {
+      const notSentContractsMessages = await db.getNotSentMessages({ launch: false });
+
+      for (const row of notSentContractsMessages) {
+        await this.sendResponse(row.id_doc, row.message);
+      }
+    } catch (error) {
+      logger.error('🗙 Error in scheduler sendNotSentResponses: ', error);
+    }
+  }
+
+  private async commitContract(contractId: string) {
+    try {
+      const res = await fetchContractCommit(contractId);
+
+      if (!res) return;
+
+      await db.updateRow({
+        table: dbConfig.tables.treasuryResponses,
+        contractId,
+        columns: {
+          ts_commit: Date.now(),
+        },
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('🗙 Error in scheduler commitContract: ', error);
+    }
+  }
+
+  private async commitNotCommittedContracts() {
+    try {
+      const notCommittedContracts = await db.getNotCommitteds();
+
+      for (const row of notCommittedContracts) {
+        await this.commitContract(row.id_doc);
+      }
+    } catch (error) {
+      logger.error('🗙 Error in scheduler commitNotCommittedContracts: ', error);
     }
   }
 
@@ -182,7 +180,7 @@ export default class Scheduler {
         }
       }
     } catch (error) {
-      console.log('!!!ERROR', error);
+      logger.error('🗙 Error in scheduler run: ', error);
     }
   }
 

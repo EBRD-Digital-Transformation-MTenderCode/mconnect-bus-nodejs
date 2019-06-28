@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { request } from '../configs';
 
-import logger from '../modules/logger';
+import logger from '../lib/logger';
 
 import { IContractRegisterPayload, IContractRegisterResponse } from '../types';
 

@@ -2,7 +2,7 @@ import http from 'http';
 
 import { serviceConfig } from '../../configs';
 
-import logger from '../logger';
+import logger from '../../lib/logger';
 
 export default class Server {
   start() {

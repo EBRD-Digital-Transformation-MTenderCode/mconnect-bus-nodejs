@@ -1,7 +1,7 @@
 import axois from 'axios';
 import { request } from '../configs';
 
-import logger from '../modules/logger';
+import logger from '../lib/logger';
 
 import { IContractQueueResponseBody, TStatusCode } from '../types';
 

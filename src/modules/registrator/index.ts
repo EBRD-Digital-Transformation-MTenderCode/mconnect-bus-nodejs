@@ -2,10 +2,10 @@ import { v4 as uuid } from 'uuid';
 
 import { fetchContractRegister, fetchEntityRecord } from '../../api';
 
-import db from '../dataBase';
-import { InConsumer, OutProducer } from '../kafka';
+import db from '../../lib/dataBase';
+import { InConsumer, OutProducer } from '../../lib/kafka';
 import { Message as IMessage } from 'kafka-node';
-import logger from '../logger';
+import logger from '../../lib/logger';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 

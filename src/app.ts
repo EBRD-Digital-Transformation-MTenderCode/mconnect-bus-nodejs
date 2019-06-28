@@ -1,7 +1,7 @@
 import Server from './modules/server';
 import Scheduler from './modules/scheduler';
 import Registrator from './modules/registrator';
-import logger from './modules/logger';
+import logger from './lib/logger';
 
 logger.info(`✔️mConnect Bus App is running`);
 
