@@ -13,6 +13,6 @@ const registrator = new Registrator();
 
 registrator.start();
 
-const scheduler = new Scheduler(1000 * 10);
+const scheduler = new Scheduler(1000 * 60);
 
 scheduler.start();

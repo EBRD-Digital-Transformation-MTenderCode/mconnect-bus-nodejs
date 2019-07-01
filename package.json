@@ -2,7 +2,7 @@
   "name": "mconnect-bus",
   "description": "Transport agent for validation contracts in Treasure Department",
   "version": "1.0.0",
-  "main": "./build/index.js",
+  "main": "./build/app.js",
   "repository": "https://github.com/mrrotberry/transport-agent",
   "scripts": {
     "start": "tsc && node ./build/app.js",

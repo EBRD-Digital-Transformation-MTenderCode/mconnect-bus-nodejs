@@ -41,7 +41,7 @@ export default class Registrator {
     const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
-    const kafkaMessageOut: IOut = {
+    return {
       id: uuid(),
       command: 'launchACVerification',
       data: {
@@ -50,8 +50,6 @@ export default class Registrator {
       },
       version: '0.0.1',
     };
-
-    return kafkaMessageOut;
   }
 
   private async generateRegistrationPayload(messageData: IIn): Promise<IContractRegisterPayload | undefined> {
