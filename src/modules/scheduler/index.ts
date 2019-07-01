@@ -109,16 +109,21 @@ export default class Scheduler {
         messages: JSON.stringify(kafkaMessageOut),
       },
     ], async error => {
-      if (error) return logger.error('🗙 Error in scheduler producer: ', error);
+      if (error) return logger.error('🗙 Error in scheduler - producer: ', error);
 
       // Update timestamp commit in treasure_in table
-      await db.updateRow({
+      const result = await db.updateRow({
         table: dbConfig.tables.responses,
         contractId,
         columns: {
           ts: Date.now(),
         },
       });
+
+      if (result.rowCount !== 1) {
+        logger.error(`🗙 Error in scheduler sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        return;
+      }
     });
   }
 
@@ -140,13 +145,18 @@ export default class Scheduler {
 
       if (!res) return;
 
-      await db.updateRow({
+      const result = await db.updateRow({
         table: dbConfig.tables.treasuryResponses,
         contractId,
         columns: {
           ts_commit: Date.now(),
         },
       });
+
+      if (result.rowCount !== 1) {
+        logger.error(`🗙 Error in scheduler commitContract: Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        return;
+      }
 
       return true;
     } catch (error) {

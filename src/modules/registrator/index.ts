@@ -212,13 +212,18 @@ export default class Registrator {
         message: kafkaMessageOut,
       });
 
-      await db.updateRow({
+      const result = await db.updateRow({
         table: dbConfig.tables.treasuryRequests,
         contractId,
         columns: {
           ts: Date.now(),
         },
       });
+
+      if (result.rowCount !== 1) {
+        logger.error(`🗙 Error in registrator registerContract: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        return;
+      }
 
       logger.info(`Contract - ${contractId} was registered`);
 
@@ -228,15 +233,20 @@ export default class Registrator {
           messages: JSON.stringify(kafkaMessageOut),
         },
       ], async (error) => {
-        if (error) return logger.error('🗙 Error in registrator registerContract-producer: ', error);
+        if (error) return logger.error('🗙 Error in registrator registerContract - producer: ', error);
 
-        await db.updateRow({
+        const result = await db.updateRow({
           table: dbConfig.tables.responses,
           contractId,
           columns: {
             ts: Date.now(),
           },
         });
+
+        if (result.rowCount !== 1) {
+          logger.error(`🗙 Error in registrator registerContract - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+          return;
+        }
       });
 
     } catch (error) {
@@ -263,13 +273,18 @@ export default class Registrator {
         const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
 
         if (sentContract.exists) {
-          await db.updateRow({
+          const result = await db.updateRow({
             table: dbConfig.tables.treasuryRequests,
             contractId,
             columns: {
               ts: Date.now(),
             },
           });
+
+          if (result.rowCount !== 1) {
+            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - sentContract.exists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+            return;
+          }
         }
         else {
           await db.insertToResponses({
@@ -279,13 +294,18 @@ export default class Registrator {
             message: kafkaMessageOut,
           });
 
-          await db.updateRow({
+          const result = await db.updateRow({
             table: dbConfig.tables.treasuryRequests,
             contractId,
             columns: {
               ts: Date.now(),
             },
           });
+
+          if (result.rowCount !== 1) {
+            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - sentContract.notExists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+            return;
+          }
         }
 
         logger.info(`Contract - ${contractId} was registered`);
@@ -296,15 +316,20 @@ export default class Registrator {
             messages: JSON.stringify(kafkaMessageOut),
           },
         ], async (error) => {
-          if (error) return logger.error('🗙 Error in registrator registerNotRegisteredContracts-producer: ', error);
+          if (error) return logger.error('🗙 Error in registrator registerNotRegisteredContracts - producer: ', error);
 
-          await db.updateRow({
+          const result = await db.updateRow({
             table: dbConfig.tables.responses,
             contractId,
             columns: {
               ts: Date.now(),
             },
           });
+
+          if (result.rowCount !== 1) {
+            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+            return;
+          }
         });
       }
     } catch (error) {
