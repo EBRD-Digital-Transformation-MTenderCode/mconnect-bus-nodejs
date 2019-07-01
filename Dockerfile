@@ -4,7 +4,7 @@ ENV NODE_ENV=production
 
 WORKDIR /transport-agent/
 
-COPY package*.json tsconfig.json .env ./
+COPY package*.json tsconfig.json ./
 COPY src ./src
 
 EXPOSE 5000
