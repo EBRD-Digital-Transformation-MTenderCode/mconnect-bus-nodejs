@@ -34,7 +34,7 @@ export const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   tables: {
     requests: process.env.DB_TABLE_REQUESTS || '',
-    responses: process.env.db_table_RESPONSES || '',
+    responses: process.env.DB_TABLE_RESPONSES || '',
     treasuryRequests: process.env.DB_TABLE_TREASURY_REQUESTS || '',
     treasuryResponses: process.env.DB_TABLE_TREASURY_RESPONSES || '',
   },
