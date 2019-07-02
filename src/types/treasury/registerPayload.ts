@@ -28,7 +28,7 @@ export interface IHeader {
   achiz_nom: string,
   achiz_date: string,
 
-  avans?: string,
+  avans?: number,
   da_expire: string,
   c_link: string
 }

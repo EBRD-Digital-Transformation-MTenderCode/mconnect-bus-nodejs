@@ -92,9 +92,9 @@ export default class Registrator {
         return addIdentifier.scheme === 'MD-BRANCHES';
       }) || {} as IAdditionalIdentifier;
 
-      const avansValue = (((planning.implementation.transactions || []).find((transaction: ITransaction) => {
+      const advanceValue = (((planning.implementation.transactions || []).find((transaction: ITransaction) => {
         return transaction.type === 'advance';
-      }) || {} as ITransaction).value || {});
+      }) || {} as ITransaction).value || {}).amount;
 
       const docsOfContractSigned = contract.documents.filter((document: IDocument) => {
         return document.documentType === 'contractSigned';
@@ -156,7 +156,9 @@ export default class Registrator {
 
       if (buyerBranchesIdentifier.id) contractRegisterPayload.header.pkd_sdiv = buyerBranchesIdentifier.id;
       if (supplierBranchesIdentifier.id) contractRegisterPayload.header.bkd_sdiv = supplierBranchesIdentifier.id;
-      if (avansValue.amount) contractRegisterPayload.header.avans = `${avansValue.amount}`;
+      if (advanceValue && contract.value.amount > advanceValue) {
+        contractRegisterPayload.header.avans = (advanceValue * 100) / contract.value.amount;
+      }
 
       return contractRegisterPayload;
     } catch (error) {
@@ -221,7 +223,7 @@ export default class Registrator {
       });
 
       if (result.rowCount !== 1) {
-        logger.error(`🗙 Error in registrator registerContract: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        logger.error(`🗙 Error in registrator registerContract: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
         return;
       }
 
@@ -244,7 +246,7 @@ export default class Registrator {
         });
 
         if (result.rowCount !== 1) {
-          logger.error(`🗙 Error in registrator registerContract - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+          logger.error(`🗙 Error in registrator registerContract - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
           return;
         }
       });
@@ -282,7 +284,7 @@ export default class Registrator {
           });
 
           if (result.rowCount !== 1) {
-            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - sentContract.exists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - sentContract.exists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
             return;
           }
         }
@@ -303,7 +305,7 @@ export default class Registrator {
           });
 
           if (result.rowCount !== 1) {
-            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - sentContract.notExists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - sentContract.notExists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
             return;
           }
         }
@@ -327,7 +329,7 @@ export default class Registrator {
           });
 
           if (result.rowCount !== 1) {
-            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+            logger.error(`🗙 Error in registrator registerNotRegisteredContracts - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
             return;
           }
         });
