@@ -41,5 +41,8 @@ CREATE TABLE IF NOT EXISTS responses
         PRIMARY KEY (id_doc, cmd_name)
 );
 
-CREATE INDEX responses_index ON responses (id_doc, cmd_name, ts)
-    WHERE ts IS NULL;
+CREATE INDEX responses_launch_index ON responses (id_doc, cmd_name, ts)
+    WHERE ts IS NULL AND cmd_name = 'launchACVerification';
+
+CREATE INDEX responses_not_launched_index ON responses (id_doc, cmd_name, ts)
+    WHERE ts IS NULL AND cmd_name != 'launchACVerification';
