@@ -43,7 +43,7 @@ export default class Registrator {
 
     return {
       id: uuid(),
-      command: 'launchACVerification',
+      command: 'launchAcVerification',
       data: {
         cpid,
         ocid,
@@ -176,7 +176,7 @@ export default class Registrator {
       });
 
       if (sentContract.exists) {
-        logger.warn(`Contract with id - ${messageData.data.ocid} is already exists in request table`);
+        logger.warn(`! Contract with id - ${messageData.data.ocid} is already exists in request table`);
         return;
       }
 

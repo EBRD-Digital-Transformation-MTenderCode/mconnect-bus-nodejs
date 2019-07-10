@@ -23,9 +23,9 @@ export default class Scheduler {
     this.interval = interval;
     this.contractIdPattern = /^ocds-([a-z]|[0-9]){6}-[A-Z]{2}-[0-9]{13}-AC-[0-9]{13}-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
     this.statusCodesMapToCommandName = {
-      '3004': 'proceedVerifiedAC',
-      '3005': 'proceedAcClarification',
-      '3006': 'proceedAcRejection',
+      '3004': 'treasuryApprovingAc',
+      '3005': 'requestForAcClarification',
+      '3006': 'processAcRejection',
     };
   }
 
@@ -67,8 +67,12 @@ export default class Scheduler {
     try {
       const contractId = treasuryContract.id_dok;
 
-      if (treasuryContract.status !== statusCode) return;
-      if (this.contractIdPattern.test(contractId)) return;
+      if (treasuryContract.status !== statusCode) {
+        logger.error('🗙 Error in scheduler treasuryContract.status not equal verifiable statusCode');
+        return;
+      }
+
+      if (!this.contractIdPattern.test(contractId)) return;
 
       const sentContract = await db.isExist(dbConfig.tables.treasuryRequests, { field: 'id_doc', value: contractId });
 
