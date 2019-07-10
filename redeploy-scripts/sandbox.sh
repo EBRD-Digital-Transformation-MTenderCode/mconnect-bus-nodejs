@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo 'Re-deploying'
 docker service create --name="mconnect-bus-nodejs" \
   --env SERVICE_PORT=5000 \
