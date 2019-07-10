@@ -68,7 +68,7 @@ export default class Scheduler {
       const contractId = treasuryContract.id_dok;
 
       if (treasuryContract.status !== statusCode) {
-        logger.error('🗙 Error in scheduler treasuryContract.status not equal verifiable statusCode');
+        logger.error('🗙 Error in SCHEDULER. treasuryContract.status not equal verifiable statusCode');
         return;
       }
 
@@ -102,7 +102,7 @@ export default class Scheduler {
 
       await this.sendResponse(contractId, kafkaMessageOut);
     } catch (error) {
-      logger.error('🗙 Error in scheduler doContractProcessing: ', error);
+      logger.error('🗙 Error in SCHEDULER. doContractProcessing: ', error);
     }
   }
 
@@ -113,7 +113,7 @@ export default class Scheduler {
         messages: JSON.stringify(kafkaMessageOut),
       },
     ], async error => {
-      if (error) return logger.error('🗙 Error in scheduler - producer: ', error);
+      if (error) return logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', error);
 
       // Update timestamp commit in treasure_in table
       const result = await db.updateRow({
@@ -125,7 +125,7 @@ export default class Scheduler {
       });
 
       if (result.rowCount !== 1) {
-        logger.error(`🗙 Error in scheduler sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        logger.error(`🗙 Error in SCHEDULER. sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
         return;
       }
     });
@@ -139,7 +139,7 @@ export default class Scheduler {
         await this.sendResponse(row.id_doc, row.message);
       }
     } catch (error) {
-      logger.error('🗙 Error in scheduler sendNotSentResponses: ', error);
+      logger.error('🗙 Error in SCHEDULER. sendNotSentResponses: ', error);
     }
   }
 
@@ -158,13 +158,13 @@ export default class Scheduler {
       });
 
       if (result.rowCount !== 1) {
-        logger.error(`🗙 Error in scheduler commitContract: Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        logger.error(`🗙 Error in SCHEDULER. commitContract: Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
         return;
       }
 
       return true;
     } catch (error) {
-      logger.error('🗙 Error in scheduler commitContract: ', error);
+      logger.error('🗙 Error in SCHEDULER. commitContract: ', error);
     }
   }
 
@@ -176,7 +176,7 @@ export default class Scheduler {
         await this.commitContract(row.id_doc);
       }
     } catch (error) {
-      logger.error('🗙 Error in scheduler commitNotCommittedContracts: ', error);
+      logger.error('🗙 Error in SCHEDULER. commitNotCommittedContracts: ', error);
     }
   }
 
@@ -202,7 +202,7 @@ export default class Scheduler {
         }
       }
     } catch (error) {
-      logger.error('🗙 Error in scheduler run: ', error);
+      logger.error('🗙 Error in SCHEDULER. run: ', error);
     }
   }
 }
