@@ -170,6 +170,8 @@ export default class Registrator {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
+      if (messageData.command !== "launchACVerification") return;
+
       const sentContract = await db.isExist(dbConfig.tables.requests, {
         field: 'cmd_id',
         value: messageData.id,

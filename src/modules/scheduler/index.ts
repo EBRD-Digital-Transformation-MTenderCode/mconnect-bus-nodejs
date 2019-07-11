@@ -34,7 +34,7 @@ export default class Scheduler {
 
     await this.run();
 
-    setInterval(() => this.run, this.interval);
+    setInterval(() => this.run(), this.interval);
   }
 
   private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
@@ -125,7 +125,7 @@ export default class Scheduler {
       });
 
       if (result.rowCount !== 1) {
-        logger.error(`🗙 Error in SCHEDULER. sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        logger.error(`🗙 Error in SCHEDULER. sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
         return;
       }
     });
@@ -158,7 +158,7 @@ export default class Scheduler {
       });
 
       if (result.rowCount !== 1) {
-        logger.error(`🗙 Error in SCHEDULER. commitContract: Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`)
+        logger.error(`🗙 Error in SCHEDULER. commitContract: Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
         return;
       }
 
@@ -201,6 +201,8 @@ export default class Scheduler {
           await this.doContractProcessing(statusCode, contractsQueue.contract);
         }
       }
+
+      logger.info(`✔ Last sync at - ${(new Date().toUTCString()).toString()}`);
     } catch (error) {
       logger.error('🗙 Error in SCHEDULER. run: ', error);
     }
