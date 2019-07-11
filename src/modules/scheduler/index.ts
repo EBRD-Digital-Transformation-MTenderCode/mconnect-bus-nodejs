@@ -87,7 +87,7 @@ export default class Scheduler {
         ts_in: Date.now(),
       });
 
-      const contractIsCommitted = await this.commitContract(contractId);
+      const contractIsCommitted = await this.commitContract(contractId, status);
 
       if (!contractIsCommitted) return;
 
@@ -143,7 +143,7 @@ export default class Scheduler {
     }
   }
 
-  private async commitContract(contractId: string) {
+  private async commitContract(contractId: string, statusCode: string) {
     try {
       const res = await fetchContractCommit(contractId);
 
@@ -162,6 +162,8 @@ export default class Scheduler {
         return;
       }
 
+      logger.info(`✔ Contract with id - ${contractId} was remove from queue with statusCode - ${statusCode}`);
+
       return true;
     } catch (error) {
       logger.error('🗙 Error in SCHEDULER. commitContract: ', error);
@@ -173,7 +175,7 @@ export default class Scheduler {
       const notCommittedContracts = await db.getNotCommitteds();
 
       for (const row of notCommittedContracts) {
-        await this.commitContract(row.id_doc);
+        await this.commitContract(row.id_doc, row.status_code);
       }
     } catch (error) {
       logger.error('🗙 Error in SCHEDULER. commitNotCommittedContracts: ', error);
