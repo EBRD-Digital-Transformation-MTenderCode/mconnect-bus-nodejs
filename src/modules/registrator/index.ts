@@ -160,6 +160,9 @@ export default class Registrator {
         contractRegisterPayload.header.avans = (advanceValue * 100) / contract.value.amount;
       }
 
+      // @TODO delete on prod
+      logger.info(`✔ Payload for register contract with id - ${contract.id} \n ${JSON.stringify(contractRegisterPayload, null, 2)}`)
+
       return contractRegisterPayload;
     } catch (error) {
       logger.error('🗙 Error in registrator generateRegistrationPayload: ', error);
