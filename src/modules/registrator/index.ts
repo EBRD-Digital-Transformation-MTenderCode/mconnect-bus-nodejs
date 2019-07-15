@@ -101,7 +101,7 @@ export default class Registrator {
       });
 
       const sortedDocsOfContractSigned = [...docsOfContractSigned].sort((doc1: IDocument, doc2: IDocument) => {
-        return +(new Date(doc1.datePublished)) - +(new Date(doc2.datePublished));
+        return +(new Date(doc2.datePublished)) - +(new Date(doc1.datePublished));
       });
 
       const benef = parties.filter((part: IParty) => {
