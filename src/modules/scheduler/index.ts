@@ -112,7 +112,7 @@ export default class Scheduler {
         topic: kafkaOutProducerConfig.outTopic,
         messages: JSON.stringify(kafkaMessageOut),
       },
-    ], async error => {
+    ], async (error: any) => {
       if (error) return logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', error);
 
       // Update timestamp commit in treasure_in table

@@ -27,7 +27,6 @@ export default class Registrator {
 
   async start() {
     logger.info('✔ Registrator started');
-
     try {
       await this.registerNotRegisteredContracts();
 
@@ -173,7 +172,7 @@ export default class Registrator {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
-      if (messageData.command !== "launchACVerification") return;
+      if (messageData.command !== "sendAcForVerification") return;
 
       const sentContract = await db.isExist(dbConfig.tables.requests, {
         field: 'cmd_id',
@@ -238,7 +237,7 @@ export default class Registrator {
           topic: kafkaOutProducerConfig.outTopic,
           messages: JSON.stringify(kafkaMessageOut),
         },
-      ], async (error) => {
+      ], async (error: any) => {
         if (error) return logger.error('🗙 Error in REGISTRATOR. registerContract - producer: ', error);
 
         const result = await db.updateRow({
@@ -321,7 +320,7 @@ export default class Registrator {
             topic: kafkaOutProducerConfig.outTopic,
             messages: JSON.stringify(kafkaMessageOut),
           },
-        ], async (error) => {
+        ], async (error: any) => {
           if (error) return logger.error('🗙 Error in REGISTRATOR. registerNotRegisteredContracts - producer: ', error);
 
           const result = await db.updateRow({

@@ -1,7 +1,6 @@
 export interface IIn {
   id: string,
-  /* @TODO  launchACVerification -> sendAcForVerification*/
-  command: 'launchACVerification',
+  command: 'sendAcForVerification',
   context: IContext,
   data: IData,
   version: string
