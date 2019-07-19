@@ -24,31 +24,62 @@ import {
 } from '../../types';
 
 export default class Registrator {
+  private readonly interval: number;
+
+  constructor(interval: number) {
+    this.interval = interval;
+  }
 
   async start() {
     logger.info('✔ Registrator started');
     try {
-      await this.registerNotRegisteredContracts();
+      await this.registerContracts();
 
-      InConsumer.on('message', (message: IMessage) => this.registerContract(message));
+      setInterval(() => this.registerContracts(), this.interval);
+
+      InConsumer.on('message', (message: IMessage) => this.saveContractForRegistration(message));
     } catch (error) {
       logger.error('🗙 Error in registrator start: ', error);
     }
   }
 
-  private generateKafkaMessageOut(contractId: string): IOut {
-    const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
-    const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
+  private async saveContractForRegistration(data: IMessage) {
+    try {
+      const messageData: IIn = JSON.parse(data.value as string);
 
-    return {
-      id: uuid(),
-      command: 'launchAcVerification',
-      data: {
-        cpid,
-        ocid,
-      },
-      version: '0.0.1',
-    };
+      if (messageData.command !== "sendAcForVerification") return;
+
+      const sentContract = await db.isExist(dbConfig.tables.requests, {
+        field: 'cmd_id',
+        value: messageData.id,
+      });
+
+      if (sentContract.exists) {
+        logger.warn(`! Warning in REGISTRATOR. Contract with id - ${messageData.data.ocid} already exists in request table`);
+      }
+
+      const payload = await this.generateRegistrationPayload(messageData);
+
+      if (!payload) {
+        logger.error(`🗙 Error in REGISTRATOR. Failed generate payload for contract register for - ${messageData.data.ocid}`);
+        return;
+      }
+
+      await db.insertToRequests({
+        cmd_id: messageData.id,
+        cmd_name: messageData.command,
+        message: messageData,
+        ts: Date.now(),
+      });
+
+      const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
+
+      await db.insertToTreasuryRequests({ id_doc: contractId, message: payload });
+
+      return payload;
+    } catch (error) {
+      logger.error('🗙 Error in REGISTRATOR. prepareContractToRegistration: ', error);
+    }
   }
 
   private async generateRegistrationPayload(messageData: IIn): Promise<IContractRegisterPayload | undefined> {
@@ -168,107 +199,34 @@ export default class Registrator {
     }
   }
 
-  private async registerContract(data: IMessage) {
-    try {
-      const messageData: IIn = JSON.parse(data.value as string);
+  private generateKafkaMessageOut(contractId: string): IOut {
+    const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
+    const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
-      if (messageData.command !== "sendAcForVerification") return;
-
-      const sentContract = await db.isExist(dbConfig.tables.requests, {
-        field: 'cmd_id',
-        value: messageData.id,
-      });
-
-      if (sentContract.exists) {
-        logger.warn(`! Warning in REGISTRATOR. Contract with id - ${messageData.data.ocid} already exists in request table`);
-      }
-
-      const payload = await this.generateRegistrationPayload(messageData);
-
-      if (!payload) {
-        logger.error(`🗙 Error in REGISTRATOR. Failed generate payload for contract register for - ${messageData.data.ocid}`);
-        return;
-      }
-
-      await db.insertToRequests({
-        cmd_id: messageData.id,
-        cmd_name: messageData.command,
-        message: messageData,
-        ts: Date.now(),
-      });
-
-      const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
-
-      await db.insertToTreasuryRequests({ id_doc: contractId, message: payload });
-
-      const contractIsRegistered = await fetchContractRegister(payload);
-
-      if (!contractIsRegistered || contractIsRegistered.id_dok !== contractId) {
-        logger.error(`🗙 Error in REGISTRATOR. Failed register contract - ${messageData.data.ocid}`);
-        return;
-      }
-
-      const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
-
-      await db.insertToResponses({
-        id_doc: contractId,
-        cmd_id: kafkaMessageOut.id,
-        cmd_name: kafkaMessageOut.command,
-        message: kafkaMessageOut,
-      });
-
-      const result = await db.updateRow({
-        table: dbConfig.tables.treasuryRequests,
-        contractId,
-        columns: {
-          ts: Date.now(),
-        },
-      });
-
-      if (result.rowCount !== 1) {
-        logger.error(`🗙 Error in registrator registerContract: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
-        return;
-      }
-
-      logger.info(`Contract - ${contractId} was registered`);
-
-      OutProducer.send([
-        {
-          topic: kafkaOutProducerConfig.outTopic,
-          messages: JSON.stringify(kafkaMessageOut),
-        },
-      ], async (error: any) => {
-        if (error) return logger.error('🗙 Error in REGISTRATOR. registerContract - producer: ', error);
-
-        const result = await db.updateRow({
-          table: dbConfig.tables.responses,
-          contractId,
-          columns: {
-            ts: Date.now(),
-          },
-        });
-
-        if (result.rowCount !== 1) {
-          logger.error(`🗙 Error in REGISTRATOR. registerContract - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
-          return;
-        }
-      });
-
-    } catch (error) {
-      logger.error('🗙 Error in REGISTRATOR. registerContract: ', error);
-    }
+    return {
+      id: uuid(),
+      command: 'launchAcVerification',
+      data: {
+        cpid,
+        ocid,
+      },
+      version: '0.0.1',
+    };
   }
 
-  private async registerNotRegisteredContracts() {
+  private async registerContracts() {
     try {
       const notRegisteredContracts = await db.getNotRegistereds();
 
       for (const row of notRegisteredContracts) {
-        logger.warn(`Not registered contract - ${row.id_doc}`);
-
         const contractId = row.id_doc;
 
-        await fetchContractRegister(row.message);
+        const contractRegistrationResponse = await fetchContractRegister(row.message);
+
+        if (!contractRegistrationResponse || contractRegistrationResponse.id_dok !== contractId) {
+          logger.error(`🗙 Error in REGISTRATOR. Failed register contract - ${contractId}`);
+          break;
+        }
 
         const sentContract = await db.isExist(dbConfig.tables.responses, {
           field: 'id_doc',

@@ -7,6 +7,9 @@ export const serviceConfig = {
   port: +(process.env.SERVICE_PORT || 5000),
 };
 
+export const registrationSchedulerInterval = +(process.env.REGISTRATION_SCHEDULER_INTERVAL_MINUTES || 3);
+export const queueSchedulerInterval = +(process.env.QUEUE_SCHEDULER_INTERVAL_MINUTES || 3);
+
 const ppBaseUrl = process.env.PP_BASE_URL || '';
 
 const treasuryBaseUrl = process.env.TREASURY_BASE_URL || '';
