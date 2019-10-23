@@ -58,7 +58,7 @@ export default class Scheduler {
       version: '0.0.1',
     };
 
-    if (status === '3005') kafkaMessageOut.data.regData = { reg_nom, reg_date };
+    if (status === '3005' && reg_nom) kafkaMessageOut.data.regData = { externalRegId: reg_nom, regDate: reg_date };
 
     return kafkaMessageOut;
   }

@@ -22,6 +22,6 @@ export interface IVerificationOut {
 }
 
 export interface IRegDataOut {
-  reg_nom: string,
-  reg_date: string
+  externalRegId: string,
+  regDate: string
 }
