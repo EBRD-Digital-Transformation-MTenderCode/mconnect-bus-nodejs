@@ -179,7 +179,7 @@ export default class Registrator {
       const { planning, contracts, parties, relatedProcesses } = acRelease;
 
       const tenderOcid = (relatedProcesses.find((process: IRelatedProcess) => {
-        return process.relationship.some((rel: string) => rel === 'x_evaluation');
+        return process.relationship.some(rel => rel === 'x_evaluation' || rel === 'x_negotiation');
       }) || {} as IRelatedProcess).identifier;
 
       const tenderRecord = await fetchEntityRecord(cpid, ocid);
