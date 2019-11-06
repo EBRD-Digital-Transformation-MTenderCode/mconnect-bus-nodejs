@@ -24,7 +24,7 @@ import {
 } from '../../types';
 
 export default class Registrator {
-  private readonly interval: number;
+  public readonly interval: number;
 
   constructor(interval: number) {
     this.interval = interval;
@@ -199,7 +199,7 @@ export default class Registrator {
     }
   }
 
-  private generateKafkaMessageOut(contractId: string): IOut {
+  public generateKafkaMessageOut(contractId: string): IOut {
     const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
