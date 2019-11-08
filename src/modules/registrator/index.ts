@@ -20,7 +20,7 @@ import {
   IParty,
   IRelatedProcess,
   ITransaction,
-  ITreasuryBudgetSources,
+  ITreasuryBudgetSources, ITreasuryRequestsRow
 } from '../../types';
 
 export default class Registrator {
@@ -33,9 +33,9 @@ export default class Registrator {
   async start() {
     logger.info('✔ Registrator started');
     try {
-      await this.registerContracts();
+      await Registrator.registerContracts();
 
-      setInterval(() => this.registerContracts(), this.interval);
+      setInterval(() => Registrator.registerContracts(), this.interval);
 
       InConsumer.on('message', (message: IMessage) => this.saveContractForRegistration(message));
     } catch (error) {
@@ -199,7 +199,7 @@ export default class Registrator {
     }
   }
 
-  private generateKafkaMessageOut(contractId: string): IOut {
+  private static generateKafkaMessageOut(contractId: string): IOut {
     const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
@@ -213,90 +213,135 @@ export default class Registrator {
       version: '0.0.1',
     };
   }
+  
+  private static async registerContractInTreasury(contract: ITreasuryRequestsRow): Promise<void> {
+    const { id_doc: contractId, message } = contract;
+  
+    try {
+      const contractRegistrationResponse = await fetchContractRegister(message);
+  
+      if (contractRegistrationResponse && contractRegistrationResponse.id_dok !== contractId) {
+        throw new Error(`🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - response id does not match contract id.`);
+      }
+  
+      if(!contractRegistrationResponse) {
+        throw new Error(`🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - response from treasury was not received.`);
+      }
+    } catch (error) {
+      throw new Error(`🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - ${error.message}`);
+    }
+  }
+  
+  private static async validateContractExistance(contract: ITreasuryRequestsRow, kafkaMessage: IOut): Promise<{ exists: boolean } | undefined> {
+    const { id_doc: contractId } = contract;
+  
+    try {
+      const sentContract = await db.isExist(dbConfig.tables.responses, {
+        field: 'id_doc',
+        value: contractId,
+      });
+  
+      try {
+        if (!sentContract.exists) {
+          await db.insertToResponses({
+            id_doc: contractId,
+            cmd_id: kafkaMessage.id,
+            cmd_name: kafkaMessage.command,
+            message: kafkaMessage
+          });
+        }
+      } catch (error) {
+        logger.error(`🗙 Error in REGISTRATOR. Failed to insert not existent contract ${contractId} to responses.`);
+      }
+  
+      return sentContract;
+    } catch(error) {
+      logger.error(`🗙 Error in REGISTRATOR. Failed to check if contract ${contractId} exists in database.`);
+    }
+  }
+  
+  private static async addContractTimestamp(
+    contract: ITreasuryRequestsRow,
+    table: 'treasuryRequests' | 'responses',
+    processType: 'Contract exists' | 'Contract does not exist' | 'Producer'
+  ): Promise<void> {
+    const { id_doc: contractId } = contract;
+  
+    const result = await db.updateRow({
+      table: dbConfig.tables[table],
+      contractId,
+      columns: {
+        ts: Date.now(),
+      },
+    });
+  
+    if (result.rowCount !== 1) {
+      throw new Error(`🗙 Error in REGISTRATOR. ${processType}: Failed to update timestamp in treasuryRequests table for id_doc ${contractId}. Column timestamp seems to be already filled.`);
+    }
+  }
+  
+  private static sendKafkaMessageOut(
+    contract: ITreasuryRequestsRow,
+    kafkaMessage: IOut
+  ): void {
+    OutProducer.send([
+      {
+        topic: kafkaOutProducerConfig.outTopic,
+        messages: JSON.stringify(kafkaMessage),
+      },
+    ], async (error: any) => {
+      if (error) return logger.error('🗙 Error in REGISTRATOR. Failed to send message out to Kafka: ', error);
+    
+      try {
+        await Registrator.addContractTimestamp(
+          contract,
+          'responses',
+          'Producer'
+        );
+      } catch (error) {
+        logger.error(error.message);
+        return;
+      }
+    });
+  }
 
-  private async registerContracts() {
+  private static async registerContracts() {
     try {
       const notRegisteredContracts = await db.getNotRegistereds();
 
-      for (const row of notRegisteredContracts) {
-        const contractId = row.id_doc;
+      for (const contract of notRegisteredContracts) {
+        const contractId = contract.id_doc;
 
-        const contractRegistrationResponse = await fetchContractRegister(row.message);
-
-        if (!contractRegistrationResponse || contractRegistrationResponse.id_dok !== contractId) {
-          logger.error(`🗙 Error in REGISTRATOR. Failed register contract - ${contractId}`);
-          break;
+        try {
+          await Registrator.registerContractInTreasury(contract);
+        } catch (error) {
+          logger.error(error.message);
+          return;
         }
-
-        const sentContract = await db.isExist(dbConfig.tables.responses, {
-          field: 'id_doc',
-          value: contractId,
-        });
+  
+        const kafkaMessageOut = Registrator.generateKafkaMessageOut(contractId);
+  
+        const sentContract = await Registrator.validateContractExistance(contract, kafkaMessageOut);
         
-        const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
-
-        if (sentContract.exists) {
-          const result = await db.updateRow({
-            table: dbConfig.tables.treasuryRequests,
-            contractId,
-            columns: {
-              ts: Date.now(),
-            },
-          });
-
-          if (result.rowCount !== 1) {
-            logger.error(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - sentContract.exists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
-            return;
-          }
-        }
-        else {
-          await db.insertToResponses({
-            id_doc: contractId,
-            cmd_id: kafkaMessageOut.id,
-            cmd_name: kafkaMessageOut.command,
-            message: kafkaMessageOut,
-          });
-
-          const result = await db.updateRow({
-            table: dbConfig.tables.treasuryRequests,
-            contractId,
-            columns: {
-              ts: Date.now(),
-            },
-          });
-
-          if (result.rowCount !== 1) {
-            logger.error(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - sentContract.notExists: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
+        if (sentContract) {
+          try {
+            await Registrator.addContractTimestamp(
+              contract,
+              'treasuryRequests',
+              sentContract.exists ? 'Contract exists' : 'Contract does not exist'
+            );
+          } catch (error) {
+            logger.error(error.message);
             return;
           }
         }
 
-        logger.info(`Contract - ${contractId} was registered`);
+        logger.info(`Contract ${contractId} was successfully registered`);
         
-        OutProducer.send([
-          {
-            topic: kafkaOutProducerConfig.outTopic,
-            messages: JSON.stringify(kafkaMessageOut),
-          },
-        ], async (error: any) => {
-          if (error) return logger.error('🗙 Error in REGISTRATOR. registerNotRegisteredContracts - producer: ', error);
-
-          const result = await db.updateRow({
-            table: dbConfig.tables.responses,
-            contractId,
-            columns: {
-              ts: Date.now(),
-            },
-          });
-
-          if (result.rowCount !== 1) {
-            logger.error(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
-            return;
-          }
-        });
+        await Registrator.sendKafkaMessageOut(contract, kafkaMessageOut);
       }
     } catch (error) {
-      logger.error('🗙 Error in REGISTRATOR. registerNotRegisteredContracts: ', error);
+      logger.error('🗙 Error in REGISTRATOR. Failed to register contracts: ', error);
     }
   }
 }
