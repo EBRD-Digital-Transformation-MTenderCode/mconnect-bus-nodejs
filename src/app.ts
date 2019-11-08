@@ -1,9 +1,10 @@
+import { registrationSchedulerInterval, queueSchedulerInterval } from 'configs';
+
 import Server from './modules/server';
 import Scheduler from './modules/scheduler';
 import Registrator from './modules/registrator';
-import logger from './lib/logger';
 
-import { registrationSchedulerInterval, queueSchedulerInterval } from './configs';
+import logger from './lib/logger';
 
 logger.info('✔ mConnect Bus App is running');
 

@@ -34,6 +34,11 @@
     "consistent-return": "warn",
     "no-restricted-syntax": "off",
     "no-await-in-loop": "off",
-    "import/prefer-default-export": "off"
+    "import/prefer-default-export": "off",
+    "@typescript-eslint/interface-name-prefix": "warn",
+    "class-methods-use-this": "warn",
+    "@typescript-eslint/ban-ts-ignore": "warn",
+    "no-shadow": "warn",
+    "no-continue": "warn"
   }
 }

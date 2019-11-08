@@ -1,10 +1,9 @@
+import { dbConfig } from 'configs';
+
+import { ITreasuryRequestsRow } from 'types/db';
 import db from '../../index';
 
-import { dbConfig } from '../../../../configs';
-
-import { ITreasuryRequestsRow } from '../../../../types';
-
-export type TGetNotRegistereds = () => Promise<ITreasuryRequestsRow[] | []>
+export type TGetNotRegistereds = () => Promise<ITreasuryRequestsRow[] | []>;
 
 const getNotRegistereds: TGetNotRegistereds = () => {
   const treasuryRequestsTable = dbConfig.tables.treasuryRequests;

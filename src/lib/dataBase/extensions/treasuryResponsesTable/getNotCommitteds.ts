@@ -1,10 +1,9 @@
+import { dbConfig } from 'configs';
+
+import { ITreasuryResponsesRow } from 'types/db';
 import db from '../../index';
 
-import { dbConfig } from '../../../../configs';
-
-import { ITreasuryResponsesRow } from '../../../../types';
-
-export type TGetNotCommitteds = () => Promise<ITreasuryResponsesRow[] | []>
+export type TGetNotCommitteds = () => Promise<ITreasuryResponsesRow[] | []>;
 
 const getNotCommitteds: TGetNotCommitteds = () => {
   const treasuryResponsesTable = dbConfig.tables.treasuryResponses;

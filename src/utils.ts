@@ -1,4 +1,4 @@
-import { IParty, TRole } from './types/entity';
+import { IParty, TRole } from 'types/entity';
 
 export const tsToPgTs = (ts: number): string => {
   const tsStr = `${ts}`;

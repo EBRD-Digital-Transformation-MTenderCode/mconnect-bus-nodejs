@@ -1,7 +1,7 @@
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
-import { loggerConfig } from '../../configs';
+import { loggerConfig } from 'configs';
 
 const { format, transports } = winston;
 const { combine, timestamp, printf, colorize, align, errors } = format;
@@ -12,12 +12,12 @@ const errorFormat = printf(({ timestamp, stack, message }) => {
       errors: [
         {
           code: '400.001.001.001',
-          description: message,
-        },
-      ],
+          description: message
+        }
+      ]
     },
     timestamp,
-    stack,
+    stack
   };
 
   return JSON.stringify(errorObject, null, 2);
@@ -25,27 +25,30 @@ const errorFormat = printf(({ timestamp, stack, message }) => {
 
 const logger = winston.createLogger({
   format: timestamp({
-    format: 'DD-MM-YYYY HH:mm:ss',
+    format: 'DD-MM-YYYY HH:mm:ss'
   }),
   transports: [
     new transports.Console({
       format: combine(
         colorize({ all: true }),
         align(),
-        printf(({ level, message, timestamp }) => `${level}: ${timestamp} --> ${message}`),
-      ),
+        printf(
+          ({ level, message, timestamp }) =>
+            `${level}: ${timestamp} --> ${message}`
+        )
+      )
     }),
     // @ts-ignore
-    new (transports.DailyRotateFile)({
+    new transports.DailyRotateFile({
       level: 'error',
       dirname: './logs',
       filename: 'errors-%DATE%.log',
       datePattern: 'YYYY-MM-DD:HH:mm:ss',
       maxSize: `${loggerConfig.maxFileSizeMb}m`,
       maxFiles: `${loggerConfig.maxFilesSaveDays}d`,
-      format: combine(errors({ stack: true }), errorFormat),
-    }),
-  ],
+      format: combine(errors({ stack: true }), errorFormat)
+    })
+  ]
 });
 
 winston.addColors({ info: 'blue' });

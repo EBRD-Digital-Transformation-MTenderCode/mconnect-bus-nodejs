@@ -1,137 +1,137 @@
 export interface IAcRecord {
-  datePublished: string,
-  releases: IRelease[]
+  datePublished: string;
+  releases: IRelease[];
 
-  [key: string]: any,
+  [key: string]: any;
 }
 
 export interface IRelease {
   planning: {
     implementation: {
-      transactions: ITransaction[]
-    },
+      transactions: ITransaction[];
+    };
     budget: {
-      description: string,
-      budgetAllocation: IBudgetAllocation[],
-      budgetSource: IBudgetSource[]
-    }
-  },
-  contracts: IContract[],
-  parties: IParty[],
-  relatedProcesses: IRelatedProcess[]
+      description: string;
+      budgetAllocation: IBudgetAllocation[];
+      budgetSource: IBudgetSource[];
+    };
+  };
+  contracts: IContract[];
+  parties: IParty[];
+  relatedProcesses: IRelatedProcess[];
 
-  [key: string]: any,
+  [key: string]: any;
 }
 
 export interface ITransaction {
-  id: string,
-  type: string,
+  id: string;
+  type: string;
   value: {
-    amount: number,
-    currency: string
-  },
+    amount: number;
+    currency: string;
+  };
   executionPeriod: {
-    durationInDays: number
-  },
-  relatedContractMilestone: string
+    durationInDays: number;
+  };
+  relatedContractMilestone: string;
 }
 
 export interface IBudgetAllocation {
-  budgetBreakdownID: string,
-  amount: number,
+  budgetBreakdownID: string;
+  amount: number;
   period: {
-    startDate: string,
-    endDate: string,
-  },
-  relatedItem: string
+    startDate: string;
+    endDate: string;
+  };
+  relatedItem: string;
 }
 
 export interface IBudgetSource {
-  budgetBreakdownID: string,
-  amount: number,
-  currency: string
+  budgetBreakdownID: string;
+  amount: number;
+  currency: string;
 }
 
 export interface IContract {
-  id: string,
-  date: string,
-  awardId: string,
-  title: string,
-  description: string,
-  status: string,
-  statusDetails: string,
-  documents: IDocument[],
+  id: string;
+  date: string;
+  awardId: string;
+  title: string;
+  description: string;
+  status: string;
+  statusDetails: string;
+  documents: IDocument[];
   period: {
-    startDate: string,
-    endDate: string
-  },
+    startDate: string;
+    endDate: string;
+  };
   value: {
-    amount: number,
-    currency: string,
-    amountNet: number,
-    valueAddedTaxIncluded: boolean
-  }
+    amount: number;
+    currency: string;
+    amountNet: number;
+    valueAddedTaxIncluded: boolean;
+  };
 
-  [key: string]: any,
+  [key: string]: any;
 }
 
 export interface IDocument {
-  id: string,
-  title?: string,
-  documentType: string,
-  url: string,
-  datePublished: string,
-  relatedConfirmations?: string[]
+  id: string;
+  title?: string;
+  documentType: string;
+  url: string;
+  datePublished: string;
+  relatedConfirmations?: string[];
 }
 
 export interface IParty {
-  id: string,
-  name: string,
+  id: string;
+  name: string;
   identifier: {
-    scheme: string,
-    id: string,
-    legalName: string
-  },
-  additionalIdentifiers: IAdditionalIdentifier[],
+    scheme: string;
+    id: string;
+    legalName: string;
+  };
+  additionalIdentifiers: IAdditionalIdentifier[];
   details: {
-    [key: string]: any,
+    [key: string]: any;
 
-    bankAccounts: IBankAccount[]
-  },
-  roles: TRole[]
+    bankAccounts: IBankAccount[];
+  };
+  roles: TRole[];
 
-  [key: string]: any,
+  [key: string]: any;
 }
 
 export interface IAdditionalIdentifier {
-  scheme: string,
-  id: string,
-  legalName: string
+  scheme: string;
+  id: string;
+  legalName: string;
 }
 
 export interface IBankAccount {
-  description: string,
-  bankName: string,
+  description: string;
+  bankName: string;
   identifier: {
-    scheme: string,
-    id: string,
-  },
+    scheme: string;
+    id: string;
+  };
   accountIdentification: {
-    scheme: string,
-    id: string,
-  }
+    scheme: string;
+    id: string;
+  };
 
-  [key: string]: any,
+  [key: string]: any;
 }
 
 export type TRole = 'payee' | 'supplier' | 'buyer' | 'payer';
 
 export interface IRelatedProcess {
-  id: string,
-  relationship: TRelationship[]
-  scheme: string,
-  identifier: string,
-  uri: string
+  id: string;
+  relationship: TRelationship[];
+  scheme: string;
+  identifier: string;
+  uri: string;
 }
 
 export type TRelationship = 'x_evaluation' | 'parent' | 'x_negotiation';
