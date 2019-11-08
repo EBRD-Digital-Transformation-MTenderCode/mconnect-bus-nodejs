@@ -2,11 +2,9 @@ import logger from '../../lib/logger';
 import db from '../../lib/dataBase';
 import { OutProducer } from '../../lib/kafka';
 import { fetchContractRegister } from '../../api';
-import { IOut } from '../../types/messages';
 import Registrator from './index';
-import { dbConfig, registrationSchedulerInterval } from '../../configs';
+import { dbConfig } from '../../configs';
 import { ITreasuryRequestsRow } from '../../types/db';
-import v4 = require('uuid/v4');
 
 jest.mock('../../lib/logger');
 
@@ -14,24 +12,22 @@ jest.mock('../../lib/dataBase');
 
 jest.mock('../../lib/kafka');
 
-jest.mock('../../api');
+jest.mock('../../api', () => ({
+  fetchContractRegister: jest.fn()
+}));
 
 describe('Registrator', () => {
-  let registrator: Registrator;
-  let interval: number;
+  let sut: Registrator;
   
   beforeEach(async () => {
-    interval = 1000 * 60 * registrationSchedulerInterval;
-    registrator = new Registrator(interval);
+    sut = new Registrator(3);
   });
   
   describe('Contract registration', () => {
     describe('No unregistered contracts present', () => {
       beforeEach(async () => {
-        db.getNotRegistereds = jest.fn(async () => {
-          return [];
-        });
-        await registrator.start();
+        (db.getNotRegistereds as jest.Mock).mockResolvedValue([]);
+        await sut.start();
       });
       
       it('Should not iterate if there are no unregistered contracts is database', async () => {
@@ -40,32 +36,32 @@ describe('Registrator', () => {
     });
   
     describe('Unregistered contracts present', () => {
-      let notRegistereds: ITreasuryRequestsRow[] | [];
+      let notRegistereds: ITreasuryRequestsRow[];
       let treasuryRequestRow: ITreasuryRequestsRow;
   
       beforeEach(async () => {
         treasuryRequestRow = {
-          id_doc: v4(),
+          id_doc: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
           message: {
             header: {
               id_dok: 'string',
               nr_dok: 'string',
               da_dok: 'string',
-  
+        
               suma: 1488,
               kd_val: 'string',
-  
+        
               pkd_fisk: 'string',
               pname: 'string',
-  
+        
               bkd_fisk: 'string',
               bname: 'string',
-  
+        
               desc: 'string',
-  
+        
               achiz_nom: 'string',
               achiz_date: 'string',
-  
+        
               da_expire: 'string',
               c_link: 'string'
             },
@@ -82,100 +78,145 @@ describe('Registrator', () => {
             }]
           }
         };
+        notRegistereds = [treasuryRequestRow];
         
-        db.getNotRegistereds = jest.fn(async () => {
-          return [treasuryRequestRow];
-        });
-        
-        notRegistereds = await db.getNotRegistereds();
-        await registrator.start();
+        (db.getNotRegistereds as jest.Mock).mockResolvedValue(notRegistereds);
       });
       
-      describe('Contract verification', () => {
-        it('Should verify each contract', () => {
-          expect(fetchContractRegister).toHaveBeenCalledTimes(notRegistereds.length);
+      describe('Response from the treasury present', () => {
+        beforeEach(() => {
+          (fetchContractRegister as jest.Mock).mockResolvedValue({
+            id_dok: treasuryRequestRow.id_doc,
+            num_row: '1'
+          });
         });
   
-        it('Should verify each contract with proper message', () => {
+        it('Should register each contract', async () => {
+          await sut.start();
+    
+          expect(fetchContractRegister).toHaveBeenCalledTimes(notRegistereds.length);
           expect(fetchContractRegister).toHaveBeenCalledWith(treasuryRequestRow.message);
         });
-      });
+  
+        describe('Fetch contract validation', () => {
+          it('Should stop contract registration if registration failed', async () => {
+            (fetchContractRegister as jest.Mock).mockResolvedValue(undefined);
+            
+            await sut.start();
+    
+            expect(db.isExist).not.toHaveBeenCalled();
+          });
+  
+          it('Should stop contract registration if registration did not happen', async () => {
+            (fetchContractRegister as jest.Mock).mockReturnValue({
+              id_dok: 'wrong_id',
+              num_row: '1'
+            });
+    
+            await sut.start();
+    
+            expect(db.isExist).not.toHaveBeenCalled();
+          });
+        });
+  
+        describe('Check contract existance in database', () => {
+          it('Should check if contracts exists in database', async () => {
+            await sut.start();
+    
+            expect(db.isExist).toHaveBeenCalledWith(dbConfig.tables.responses, {
+              field: 'id_doc',
+              value: treasuryRequestRow.id_doc
+            });
+          });
+  
+          describe('Contract timestamp update', () => {
+            describe('When contract exists in database', () => {
+              beforeEach(() => {
+                (db.isExist as jest.Mock).mockReturnValue({ exists: true });
+              });
+    
+              it('Should update contract\'s timestamp', async () => {
+                await sut.start();
       
-      describe('Kafka message out generation', () => {
-        let messageOut: IOut;
-        
-        beforeEach(() => {
-          const ocid = treasuryRequestRow.id_doc.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
-          const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
-          messageOut = {
-            id: expect.any(String),
-            command: 'launchAcVerification',
-            data: {
-              cpid,
-              ocid
-            },
-            version: '0.0.1'
-          };
-  
-          registrator.generateKafkaMessageOut = jest.fn(() => <IOut>messageOut);
-        });
-        
-        it('Should be generate message for each contract', () => {
-          expect(registrator.generateKafkaMessageOut).toHaveBeenCalledTimes(notRegistereds.length);
-        });
-        
-        it('Should be called with current contract\'s id', () => {
-          expect(registrator.generateKafkaMessageOut).toHaveBeenCalledWith(treasuryRequestRow.id_doc);
-        });
-  
-        it('Should generate out message with current contract\'s id', () => {
-          expect(registrator.generateKafkaMessageOut).toReturnWith(messageOut);
-        });
-      });
+                expect(db.updateRow).toHaveBeenCalledWith({
+                  table: dbConfig.tables.treasuryRequests,
+                  contractId: treasuryRequestRow.id_doc,
+                  columns: {
+                    ts: expect.any(Number)
+                  }
+                });
+              });
+    
+              it('Should terminate registration when timestamp already exists', async () => {
+                (db.updateRow as jest.Mock).mockResolvedValue({ rowCount: 2 });
       
-      describe('Contract exsistance in database check', () => {
-        beforeEach(() => {
-          db.isExist = jest.fn(async () => {
-            return { exists: false };
-          });
+                await sut.start();
+      
+                // TODO: throw errors on each failed validation step
+                expect(logger.error).toHaveBeenCalledWith(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - sentContract.exists: Can't update timestamp in treasuryRequests table for id_doc ${treasuryRequestRow.id_doc}. Seem to be column timestamp already filled`);
+              });
+            });
+  
+            describe('When contract does not exist in database', () => {
+              beforeEach(() => {
+                (db.isExist as jest.Mock).mockReturnValue({ exists: false });
+              });
+    
+              it('Should insert contract to database first', async () => {
+                await sut.start();
+      
+                expect(db.insertToResponses).toHaveBeenCalled();
+              });
+    
+              it('Should still update contract\'s timestamp', async () => {
+                await sut.start();
+      
+                expect(db.updateRow).toHaveBeenCalledWith({
+                  table: dbConfig.tables.treasuryRequests,
+                  contractId: treasuryRequestRow.id_doc,
+                  columns: {
+                    ts: expect.any(Number)
+                  }
+                });
+              });
+    
+              it('Should terminate registration when timestamp already exists', async () => {
+                (db.updateRow as jest.Mock).mockResolvedValue({ rowCount: 2 });
+      
+                await sut.start();
+      
+                // TODO: throw errors on each failed validation step
+                expect(logger.error).toHaveBeenCalledWith(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - sentContract.notExists: Can't update timestamp in treasuryRequests table for id_doc ${treasuryRequestRow.id_doc}. Seem to be column timestamp already filled`);
+              });
+            });
+          })
         });
         
-        it('Should check if sent contract exists in database', async () => {
-          expect(db.isExist).toHaveBeenCalledTimes(notRegistereds.length);
-        });
-  
-        it('Should insert new row to responses in database if sent contract does not exist there', () => {
-          const kafkaMessageOut = registrator.generateKafkaMessageOut(treasuryRequestRow.id_doc);
-  
-          expect(db.insertToResponses).toHaveBeenCalled();
-          expect(db.insertToResponses).toHaveBeenCalledWith({
-            id_doc: treasuryRequestRow.id_doc,
-            cmd_id: kafkaMessageOut.id,
-            cmd_name: kafkaMessageOut.command,
-            message: kafkaMessageOut
-          });
-        });
-      });
-  
-      describe('Finalization', () => {
-        it('Should add timestamp to registered contract', () => {
-          expect(db.updateRow).toHaveBeenCalledWith({
-            table: dbConfig.tables.treasuryRequests,
-            contractId: treasuryRequestRow.id_doc,
-            columns: {
-              ts: expect.any(Date)
-            }
-          });
-        });
-  
-        it('Should log successful registration messages', () => {
-          expect(logger.info).toHaveBeenCalledTimes(notRegistereds.length);
-        });
-  
-        it('Should send messages to kafka when done', () => {
+        it('Should send message to kafka when registration done', async () => {
+          (db.isExist as jest.Mock).mockReturnValue({ exists: true });
+          (db.updateRow as jest.Mock).mockResolvedValue({ rowCount: 1 });
+          
+          await sut.start();
+          
           expect(OutProducer.send).toHaveBeenCalledTimes(notRegistereds.length);
+          expect(OutProducer.send).toHaveBeenCalledWith([{
+            topic: expect.any(String),
+            messages: expect.any(String)
+          }],
+            expect.any(Function))
         });
-      })
+      });
+      
+      describe('No response from the treasury', () => {
+        beforeEach(() => {
+          (fetchContractRegister as jest.Mock).mockReturnValue(undefined);
+          db.isExist = jest.fn();
+        });
+        
+        it('Should break iteration', () => {
+          expect(db.isExist).not.toHaveBeenCalled();
+        });
+      });
     });
   });
 });

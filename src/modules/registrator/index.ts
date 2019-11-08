@@ -199,7 +199,7 @@ export default class Registrator {
     }
   }
 
-  public generateKafkaMessageOut(contractId: string): IOut {
+  private generateKafkaMessageOut(contractId: string): IOut {
     const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
@@ -232,7 +232,7 @@ export default class Registrator {
           field: 'id_doc',
           value: contractId,
         });
-
+        
         const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
 
         if (sentContract.exists) {
@@ -272,7 +272,7 @@ export default class Registrator {
         }
 
         logger.info(`Contract - ${contractId} was registered`);
-
+        
         OutProducer.send([
           {
             topic: kafkaOutProducerConfig.outTopic,
