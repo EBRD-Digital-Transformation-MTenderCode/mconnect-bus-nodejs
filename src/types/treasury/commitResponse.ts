@@ -1,4 +1,4 @@
 export interface IContractCommitResponse {
-  id_dok: string,
-  num_row: string
+  id_dok: string;
+  num_row: string;
 }

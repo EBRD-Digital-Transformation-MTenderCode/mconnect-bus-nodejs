@@ -1,14 +1,16 @@
 import db from '../index';
 
-export type TIsExist = (table: string, { field, value }: { field: string, value: string }) => Promise<{ exists: boolean }>;
+export type TIsExist = (
+  table: string,
+  { field, value }: { field: string; value: string }
+) => Promise<{ exists: boolean }>;
 
 const isExist: TIsExist = (table, { field, value }) => {
-
   const query = `
-    SELECT EXISTS 
+    SELECT EXISTS
     (
-      SELECT 1 FROM ${table} 
-      WHERE ${field} = ${typeof value === 'string' ? `'${value}'` : value} 
+      SELECT 1 FROM ${table}
+      WHERE ${field} = ${typeof value === 'string' ? `'${value}'` : value}
       LIMIT 1
     )
   `;

@@ -1,5 +1,5 @@
 export type TCommandName =
-  'launchAcVerification'
+  | 'launchAcVerification'
   | 'treasuryApprovingAc'
   | 'requestForAcClarification'
-  | 'processAcRejection'
+  | 'processAcRejection';

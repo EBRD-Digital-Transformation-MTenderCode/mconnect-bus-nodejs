@@ -1,4 +1,4 @@
 export interface IContractRegisterResponse {
-  id_dok: string,
-  num_row: string
+  id_dok: string;
+  num_row: string;
 }
