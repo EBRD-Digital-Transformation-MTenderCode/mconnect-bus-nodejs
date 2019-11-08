@@ -134,4 +134,4 @@ export interface IRelatedProcess {
   uri: string
 }
 
-export type TRelationship = 'x_evaluation' | 'parent' | 'x_negotiation'
+export type TRelationship = 'x_evaluation' | 'parent' | 'x_negotiation';
