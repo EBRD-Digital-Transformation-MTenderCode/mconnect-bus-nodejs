@@ -9,6 +9,8 @@ import logger from '../../lib/logger';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
+import { findOrganizationFromRole } from '../../utils';
+
 import {
   IAcRecord,
   IAdditionalIdentifier,
@@ -24,14 +26,11 @@ import {
 } from '../../types';
 
 export default class Registrator {
-  public readonly interval: number;
-
-  constructor(interval: number) {
-    this.interval = interval;
-  }
+  constructor(private readonly interval: number) {}
 
   async start() {
     logger.info('✔ Registrator started');
+
     try {
       await Registrator.registerContracts();
 
@@ -43,18 +42,105 @@ export default class Registrator {
     }
   }
 
+  private async registerContracts() {
+    try {
+      const notRegisteredContracts = await db.getNotRegistereds();
+
+      for (const row of notRegisteredContracts) {
+        const contractId = row.id_doc;
+
+        const contractRegistrationResponse = await fetchContractRegister(row.message);
+
+        if (!contractRegistrationResponse || contractRegistrationResponse.id_dok !== contractId) {
+          logger.error(`🗙 Error in REGISTRATOR. Failed register contract - ${contractId}`);
+          break;
+        }
+
+        const { exists: contractIsExist } = await db.isExist(dbConfig.tables.responses, {
+          field: 'id_doc',
+          value: contractId,
+        });
+
+        const kafkaMessageOut = this.generateKafkaMessageOut(contractId);
+
+        if (!contractIsExist) {
+          await db.insertToResponses({
+            id_doc: contractId,
+            cmd_id: kafkaMessageOut.id,
+            cmd_name: kafkaMessageOut.command,
+            message: kafkaMessageOut,
+          });
+        }
+
+        const result = await db.updateRow({
+          table: dbConfig.tables.treasuryRequests,
+          contractId,
+          columns: {
+            ts: Date.now(),
+          },
+        });
+
+        if (result.rowCount !== 1) {
+          logger.error(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - sentContract.${contractIsExist ? 'exist' : 'notExists'}: Can't update timestamp in treasuryRequests table for id_doc ${contractId}. Seem to be column timestamp already filled`);
+          return;
+        }
+
+        logger.info(`Contract - ${contractId} was registered`);
+
+        OutProducer.send([
+          {
+            topic: kafkaOutProducerConfig.outTopic,
+            messages: JSON.stringify(kafkaMessageOut),
+          },
+        ], async (error: any) => {
+          if (error) return logger.error('🗙 Error in REGISTRATOR. registerNotRegisteredContracts - producer: ', error);
+
+          const result = await db.updateRow({
+            table: dbConfig.tables.responses,
+            contractId,
+            columns: {
+              ts: Date.now(),
+            },
+          });
+
+          if (result.rowCount !== 1) {
+            logger.error(`🗙 Error in REGISTRATOR. registerNotRegisteredContracts - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`);
+            return;
+          }
+        });
+      }
+    } catch (error) {
+      logger.error('🗙 Error in REGISTRATOR. registerNotRegisteredContracts: ', error);
+    }
+  }
+
+  private generateKafkaMessageOut(contractId: string): IOut {
+    const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, ''); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
+    const cpid = ocid.replace(/-AC-[0-9]{13}$/, ''); // ocds-b3wdp1-MD-1539843614475
+
+    return {
+      id: uuid(),
+      command: 'launchAcVerification',
+      data: {
+        cpid,
+        ocid,
+      },
+      version: '0.0.1',
+    };
+  }
+
   private async saveContractForRegistration(data: IMessage) {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
-      if (messageData.command !== "sendAcForVerification") return;
+      if (messageData.command !== 'sendAcForVerification') return;
 
-      const sentContract = await db.isExist(dbConfig.tables.requests, {
+      const { exists: contractIsExist } = await db.isExist(dbConfig.tables.requests, {
         field: 'cmd_id',
         value: messageData.id,
       });
 
-      if (sentContract.exists) {
+      if (contractIsExist) {
         logger.warn(`! Warning in REGISTRATOR. Contract with id - ${messageData.data.ocid} already exists in request table`);
       }
 
@@ -75,8 +161,6 @@ export default class Registrator {
       const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
 
       await db.insertToTreasuryRequests({ id_doc: contractId, message: payload });
-
-      return payload;
     } catch (error) {
       logger.error('🗙 Error in REGISTRATOR. prepareContractToRegistration: ', error);
     }
@@ -94,35 +178,31 @@ export default class Registrator {
 
       const { planning, contracts, parties, relatedProcesses } = acRelease;
 
-      const evOcid = (relatedProcesses.find((process: IRelatedProcess) => {
-        return process.relationship.some((rel: string) => rel === 'x_evaluation');
+      const tenderOcid = (relatedProcesses.find((process: IRelatedProcess) => {
+        return process.relationship.some(rel => rel === 'x_evaluation' || rel === 'x_negotiation');
       }) || {} as IRelatedProcess).identifier;
 
-      const evRecord = await fetchEntityRecord(cpid, ocid);
+      const tenderRecord = await fetchEntityRecord(cpid, ocid);
 
-      if (!evRecord) return;
+      if (!tenderRecord) return;
 
       const [contract] = contracts;
 
       const id_dok = `${contract.id}-${messageData.context.startDate}`;
 
-      const buyer = parties.find((part: any) => {
-        return part.roles.some((role: string) => role === 'buyer');
-      }) || {} as IParty;
+      const buyer = findOrganizationFromRole(parties, 'buyer') || {} as IParty;
 
       const buyerBranchesIdentifier = (buyer.additionalIdentifiers || []).find((addIdentifier: IAdditionalIdentifier) => {
         return addIdentifier.scheme === 'MD-BRANCHES';
       }) || {} as IAdditionalIdentifier;
 
-      const supplier = parties.find((part: any) => {
-        return part.roles.some((role: string) => role === 'supplier');
-      }) || {} as IParty;
+      const supplier = findOrganizationFromRole(parties, 'supplier') || {} as IParty;
 
       const supplierBranchesIdentifier = (supplier.additionalIdentifiers || []).find((addIdentifier: IAdditionalIdentifier) => {
         return addIdentifier.scheme === 'MD-BRANCHES';
       }) || {} as IAdditionalIdentifier;
 
-      const advanceValue = (((planning.implementation.transactions || []).find((transaction: ITransaction) => {
+      const advanceValue = ((planning.implementation.transactions.find((transaction: ITransaction) => {
         return transaction.type === 'advance';
       }) || {} as ITransaction).value || {}).amount;
 
@@ -134,9 +214,9 @@ export default class Registrator {
         return +(new Date(doc2.datePublished)) - +(new Date(doc1.datePublished));
       });
 
-      const benef = parties.filter((part: IParty) => {
-        return part.roles.some((role: string) => role === 'supplier');
-      }).map((part: IParty) => ({
+      const benef = parties.filter(part => {
+        return part.roles.some(role => role === 'supplier');
+      }).map(part => ({
         id_dok,
         bbic: part.details.bankAccounts[0].identifier.id,
         biban: part.details.bankAccounts[0].accountIdentification.id,
@@ -174,8 +254,8 @@ export default class Registrator {
 
           desc: contract.description,
 
-          achiz_nom: evOcid,
-          achiz_date: evRecord.publishedDate,
+          achiz_nom: tenderOcid,
+          achiz_date: tenderRecord.publishedDate,
 
           da_expire: contract.period.endDate,
           c_link: sortedDocsOfContractSigned[sortedDocsOfContractSigned.length - 1].url,
@@ -191,7 +271,7 @@ export default class Registrator {
       }
 
       // @TODO delete on prod
-      logger.info(`✔ Payload for register contract with id - ${contract.id} \n ${JSON.stringify(contractRegisterPayload, null, 2)}`)
+      logger.info(`✔ Payload for register contract with id - ${contract.id} \n ${JSON.stringify(contractRegisterPayload, null, 2)}`);
 
       return contractRegisterPayload;
     } catch (error) {

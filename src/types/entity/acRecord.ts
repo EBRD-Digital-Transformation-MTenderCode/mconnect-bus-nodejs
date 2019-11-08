@@ -98,7 +98,7 @@ export interface IParty {
 
     bankAccounts: IBankAccount[]
   },
-  roles: ('payee' | 'supplier' | 'buyer' | 'payer')[]
+  roles: TRole[]
 
   [key: string]: any,
 }
@@ -124,10 +124,14 @@ export interface IBankAccount {
   [key: string]: any,
 }
 
+export type TRole = 'payee' | 'supplier' | 'buyer' | 'payer';
+
 export interface IRelatedProcess {
   id: string,
-  relationship: ('x_evaluation' | 'parent')[]
+  relationship: TRelationship[]
   scheme: string,
   identifier: string,
   uri: string
 }
+
+export type TRelationship = 'x_evaluation' | 'parent' | 'x_negotiation';

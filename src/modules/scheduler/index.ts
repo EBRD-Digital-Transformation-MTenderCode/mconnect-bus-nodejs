@@ -40,8 +40,8 @@ export default class Scheduler {
   private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
     const { id_dok, status, descr, st_date, reg_nom, reg_date } = treasuryContract;
 
-    const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
-    const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
+    const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, ''); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
+    const cpid = ocid.replace(/-AC-[0-9]{13}$/, ''); // ocds-b3wdp1-MD-1539843614475
 
     const kafkaMessageOut: IOut = {
       id: uuid(),
@@ -58,7 +58,7 @@ export default class Scheduler {
       version: '0.0.1',
     };
 
-    if (status === '3005' && reg_nom) kafkaMessageOut.data.regData = { externalRegId: reg_nom, regDate: reg_date };
+    if (status === '3005') kafkaMessageOut.data.regData = { externalRegId: reg_nom, regDate: reg_date };
 
     return kafkaMessageOut;
   }
@@ -77,6 +77,11 @@ export default class Scheduler {
       const sentContract = await db.isExist(dbConfig.tables.treasuryRequests, { field: 'id_doc', value: contractId });
 
       if (!sentContract.exists) return;
+
+      if (treasuryContract.status === '3005' && (!treasuryContract.reg_nom || !treasuryContract.reg_date)) {
+        logger.error(`🗙 Error in SCHEDULER. Contract in queue 3005 with id ${treasuryContract.id_dok} hasn't reg_nom OR reg_date fields`);
+        return;
+      }
 
       const { status } = treasuryContract;
 
