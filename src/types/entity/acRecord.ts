@@ -1,5 +1,5 @@
 export interface IAcRecord {
-  datePublished: string;
+  publishedDate: string;
   releases: IRelease[];
 
   [key: string]: any;
