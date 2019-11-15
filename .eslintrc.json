@@ -39,6 +39,7 @@
     "class-methods-use-this": "warn",
     "@typescript-eslint/ban-ts-ignore": "warn",
     "no-shadow": "warn",
-    "no-continue": "warn"
+    "no-continue": "warn",
+    "prefer-destructuring": "off"
   }
 }

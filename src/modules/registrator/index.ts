@@ -25,10 +25,58 @@ import {
   ITransaction,
   ITreasuryBudgetSources,
   ITreasuryRequestsRow
-} from '../../types';
+} from 'types';
 
 export default class Registrator {
   constructor(private readonly interval: number) {}
+
+  private static async registerContracts(): Promise<void> {
+    try {
+      const notRegisteredContracts = await db.getNotRegistereds();
+
+      for (const contract of notRegisteredContracts) {
+        const contractId = contract.id_doc;
+
+        try {
+          await Registrator.registerContractInTreasury(contract);
+        } catch (error) {
+          logger.error(error.message);
+          return;
+        }
+
+        const kafkaMessageOut = Registrator.generateKafkaMessageOut(contractId);
+
+        const sentContract = await Registrator.validateContractExistance(
+          contract,
+          kafkaMessageOut
+        );
+
+        if (sentContract) {
+          try {
+            await Registrator.addContractTimestamp(
+              contract,
+              'treasuryRequests',
+              sentContract.exists
+                ? 'Contract exists'
+                : 'Contract does not exist'
+            );
+          } catch (error) {
+            logger.error(error.message);
+            return;
+          }
+        }
+
+        logger.info(`Contract ${contractId} was successfully registered`);
+
+        await Registrator.sendKafkaMessageOut(contract, kafkaMessageOut);
+      }
+    } catch (error) {
+      logger.error(
+        '🗙 Error in REGISTRATOR. Failed to register contracts: ',
+        error
+      );
+    }
+  }
 
   private static generateKafkaMessageOut(contractId: string): IOut {
     const ocid = contractId.replace(
@@ -161,71 +209,9 @@ export default class Registrator {
     );
   }
 
-  private static async registerContracts(): Promise<void> {
-    try {
-      const notRegisteredContracts = await db.getNotRegistereds();
-
-      for (const contract of notRegisteredContracts) {
-        const contractId = contract.id_doc;
-
-        try {
-          await Registrator.registerContractInTreasury(contract);
-        } catch (error) {
-          logger.error(error.message);
-          return;
-        }
-
-        const kafkaMessageOut = Registrator.generateKafkaMessageOut(contractId);
-
-        const sentContract = await Registrator.validateContractExistance(
-          contract,
-          kafkaMessageOut
-        );
-
-        if (sentContract) {
-          try {
-            await Registrator.addContractTimestamp(
-              contract,
-              'treasuryRequests',
-              sentContract.exists
-                ? 'Contract exists'
-                : 'Contract does not exist'
-            );
-          } catch (error) {
-            logger.error(error.message);
-            return;
-          }
-        }
-
-        logger.info(`Contract ${contractId} was successfully registered`);
-
-        await Registrator.sendKafkaMessageOut(contract, kafkaMessageOut);
-      }
-    } catch (error) {
-      logger.error(
-        '🗙 Error in REGISTRATOR. Failed to register contracts: ',
-        error
-      );
-    }
-  }
-
-  public async start(): Promise<void> {
-    logger.info('✔ Registrator started');
-
-    try {
-      await Registrator.registerContracts();
-
-      setInterval(() => Registrator.registerContracts(), this.interval);
-
-      InConsumer.on('message', (message: IMessage) =>
-        this.saveContractForRegistration(message)
-      );
-    } catch (error) {
-      logger.error('🗙 Error in registrator start: ', error);
-    }
-  }
-
-  private async saveContractForRegistration(data: IMessage): Promise<void> {
+  private static async saveContractForRegistration(
+    data: IMessage
+  ): Promise<void> {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
@@ -241,15 +227,17 @@ export default class Registrator {
 
       if (contractIsExist) {
         logger.warn(
-          `! Warning in REGISTRATOR. Contract with id - ${messageData.data.ocid} already exists in request table`
+          `! Warning in REGISTRATOR. Contract ${messageData.data.ocid} being saved for registration already exists in request table.`
         );
       }
 
-      const payload = await this.generateRegistrationPayload(messageData);
+      const payload = await Registrator.generateRegistrationPayload(
+        messageData
+      );
 
       if (!payload) {
         logger.error(
-          `🗙 Error in REGISTRATOR. Failed generate payload for contract register for - ${messageData.data.ocid}`
+          `🗙 Error in REGISTRATOR. Failed to generate contract register payload for - ${messageData.data.ocid}`
         );
         return;
       }
@@ -269,13 +257,13 @@ export default class Registrator {
       });
     } catch (error) {
       logger.error(
-        '🗙 Error in REGISTRATOR. prepareContractToRegistration: ',
+        '🗙 Error in REGISTRATOR. Failed to save contract for registration: ',
         error
       );
     }
   }
 
-  private async generateRegistrationPayload(
+  private static async generateRegistrationPayload(
     messageData: IIn
   ): Promise<IContractRegisterPayload | undefined> {
     try {
@@ -435,6 +423,22 @@ export default class Registrator {
         '🗙 Error in registrator generateRegistrationPayload: ',
         error
       );
+    }
+  }
+
+  public async start(): Promise<void> {
+    logger.info('✔ Registrator started');
+
+    try {
+      await Registrator.registerContracts();
+
+      setInterval(() => Registrator.registerContracts(), this.interval);
+
+      InConsumer.on('message', (message: IMessage) =>
+        Registrator.saveContractForRegistration(message)
+      );
+    } catch (error) {
+      logger.error('🗙 Error in registrator start: ', error);
     }
   }
 }
