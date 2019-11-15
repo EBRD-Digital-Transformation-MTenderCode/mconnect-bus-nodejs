@@ -430,7 +430,7 @@ describe('Registrator', () => {
       };
       const { parties } = acRelease;
 
-      beforeEach(async () => {
+      beforeEach(() => {
         message = {
           topic: '',
           value: {
@@ -454,19 +454,19 @@ describe('Registrator', () => {
             }
           }
         };
-
-        await sut.start();
-        callback = (InConsumer.on as jest.Mock).mock.calls[0][1];
-        value = JSON.stringify(message.value);
-
-        await callback({ ...message, value });
       });
 
       describe('Check contract existance in database', () => {
-        beforeEach(() => {
+        beforeEach(async () => {
           (db.isExist as jest.Mock).mockImplementation(async () => ({
             exists: true
           }));
+
+          await sut.start();
+          callback = (InConsumer.on as jest.Mock).mock.calls[0][1];
+          value = JSON.stringify(message.value);
+
+          await callback({ topic: message.topic, value });
         });
 
         it('Should check if contract exists in database', () => {
@@ -486,6 +486,14 @@ describe('Registrator', () => {
       });
 
       describe('Registration payload generation', () => {
+        beforeEach(async () => {
+          await sut.start();
+          callback = (InConsumer.on as jest.Mock).mock.calls[0][1];
+          value = JSON.stringify(message.value);
+
+          await callback({ topic: message.topic, value });
+        });
+
         describe('AC record fetching', () => {
           it('Should fetch AC record', () => {
             expect(fetchEntityRecord).toHaveBeenCalled();
@@ -552,7 +560,7 @@ describe('Registrator', () => {
       });
 
       describe('Insertion to requests', () => {
-        beforeEach(() => {
+        beforeEach(async () => {
           (fetchEntityRecord as jest.Mock).mockResolvedValue({
             releases: [acRelease],
             publishedDate: '12412412'
@@ -565,7 +573,11 @@ describe('Registrator', () => {
             }
           });
 
-          (db.insertToRequests as jest.Mock).mockResolvedValue(true);
+          await sut.start();
+          callback = (InConsumer.on as jest.Mock).mock.calls[0][1];
+          value = JSON.stringify(message.value);
+
+          await callback({ topic: message.topic, value });
         });
 
         it('Should insert message to requests', () => {
@@ -574,12 +586,12 @@ describe('Registrator', () => {
             cmd_id: message.value.id,
             cmd_name: message.value.command,
             message: message.value,
-            ts: expect.any(String)
+            ts: expect.any(Number)
           });
         });
 
         it('Should insert message to treasury requests', () => {
-          (db.insertToTreasuryRequests as jest.Mock).mockResolvedValue(true);
+          (db.insertToRequests as jest.Mock).mockResolvedValue(true);
 
           expect(db.insertToTreasuryRequests).toHaveBeenCalled();
           expect(db.insertToTreasuryRequests).toHaveBeenCalledWith({
