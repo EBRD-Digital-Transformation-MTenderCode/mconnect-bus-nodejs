@@ -15,14 +15,11 @@ type IStatusCodesMapToCommandName = {
 };
 
 export default class Scheduler {
-  private readonly interval: number;
-
   private readonly contractIdPattern: RegExp;
 
   private readonly statusCodesMapToCommandName: IStatusCodesMapToCommandName;
 
-  constructor(interval: number) {
-    this.interval = interval;
+  constructor(private readonly interval: number) {
     this.contractIdPattern = /^ocds-([a-z]|[0-9]){6}-[A-Z]{2}-[0-9]{13}-AC-[0-9]{13}-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
     this.statusCodesMapToCommandName = {
       '3004': 'treasuryApprovingAc',
@@ -31,7 +28,7 @@ export default class Scheduler {
     };
   }
 
-  async start() {
+  public async start(): Promise<void> {
     logger.info('✔ Scheduler started');
 
     await this.run();
@@ -82,7 +79,7 @@ export default class Scheduler {
   private async doContractProcessing(
     statusCode: TStatusCode,
     treasuryContract: ITreasuryContract
-  ) {
+  ): Promise<void | undefined> {
     try {
       const contractId = treasuryContract.id_dok;
 
@@ -140,7 +137,10 @@ export default class Scheduler {
     }
   }
 
-  private async sendResponse(contractId: string, kafkaMessageOut: IOut) {
+  private async sendResponse(
+    contractId: string,
+    kafkaMessageOut: IOut
+  ): Promise<void> {
     OutProducer.send(
       [
         {
@@ -173,7 +173,7 @@ export default class Scheduler {
     );
   }
 
-  private async sendNotSentResponses() {
+  private async sendNotSentResponses(): Promise<void> {
     try {
       const notSentContractsMessages = await db.getNotSentMessages({
         launch: false
@@ -187,7 +187,10 @@ export default class Scheduler {
     }
   }
 
-  private async commitContract(contractId: string, statusCode: string) {
+  private async commitContract(
+    contractId: string,
+    statusCode: string
+  ): Promise<boolean | undefined> {
     try {
       const res = await fetchContractCommit(contractId);
 
@@ -209,7 +212,7 @@ export default class Scheduler {
       }
 
       logger.info(
-        `✔ Contract with id - ${contractId} was remove from queue with statusCode - ${statusCode}`
+        `✔ Contract with id - ${contractId} was removed from queue with statusCode - ${statusCode}`
       );
 
       return true;
@@ -218,12 +221,12 @@ export default class Scheduler {
     }
   }
 
-  private async commitNotCommittedContracts() {
+  private async commitNotCommittedContracts(): Promise<void> {
     try {
       const notCommittedContracts = await db.getNotCommitteds();
 
-      for (const row of notCommittedContracts) {
-        await this.commitContract(row.id_doc, row.status_code);
+      for (const contract of notCommittedContracts) {
+        await this.commitContract(contract.id_doc, contract.status_code);
       }
     } catch (error) {
       logger.error(
@@ -233,7 +236,7 @@ export default class Scheduler {
     }
   }
 
-  private async run() {
+  private async run(): Promise<void> {
     try {
       await this.commitNotCommittedContracts();
 
