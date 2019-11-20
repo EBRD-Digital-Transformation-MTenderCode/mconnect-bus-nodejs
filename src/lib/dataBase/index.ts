@@ -1,10 +1,9 @@
 import pgPromise, { IDatabase, IMain } from 'pg-promise';
 
+import { dbConfig } from 'configs';
 import { extentions, IExtensions } from './extensions';
 
 import logger from '../logger';
-
-import { dbConfig } from '../../configs';
 
 const pgPromiseInst: IMain = pgPromise({
   extend: (obj: IDatabase<IExtensions> & IExtensions) => {
@@ -18,7 +17,7 @@ const pgPromiseInst: IMain = pgPromise({
     obj.updateRow = extentions.updateRow;
     obj.isExist = extentions.isExist;
     obj.getRow = extentions.getRow;
-  },
+  }
 });
 
 const { host, port, database, user, password } = dbConfig;
@@ -28,12 +27,14 @@ const db = pgPromiseInst({
   port,
   database,
   user,
-  password,
+  password
 }) as IDatabase<IExtensions> & IExtensions;
 
-db.connect().then(obj => {
-  logger.info('✔ Connected to database');
-  obj.done();
-}).catch(error => logger.error('🗙 Error connect to DB: ', error));
+db.connect()
+  .then(obj => {
+    logger.info('✔ Connected to database');
+    obj.done();
+  })
+  .catch(error => logger.error('🗙 Error connect to DB: ', error));
 
 export default db;

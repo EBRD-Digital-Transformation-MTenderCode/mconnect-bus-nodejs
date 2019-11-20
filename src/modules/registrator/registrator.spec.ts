@@ -23,7 +23,7 @@ jest.mock('utils', () => ({
   findOrganizationFromRole: jest.fn()
 }));
 
-describe('Registrator', () => {
+describe('[Unit] Registrator', () => {
   let sut: Registrator;
 
   beforeEach(async () => {
