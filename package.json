@@ -6,7 +6,7 @@
   "repository": "https://bitbucket.org/mconnect-bus-nodejs/",
   "scripts": {
     "start": "tsc && node ./build/app.js",
-    "start:dev": "ts-node src/app.ts",
+    "start:dev": "NODE_PATH=./src ts-node src/app.ts",
     "dev": "nodemon",
     "build": "tsc --diagnostics",
     "test": "jest",
