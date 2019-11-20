@@ -1,17 +1,10 @@
-import {
-  IRequestsRow,
-  IResponsesRow,
-  ITreasuryRequestsRow,
-  ITreasuryResponsesRow
-} from 'types/db';
+import { IResponsesRow, ITreasuryRequestsRow, ITreasuryResponsesRow } from 'types/db';
 import db from '../index';
 
 export type TGetRow = (
   table: string,
   contractId: string
-) => Promise<
-  IRequestsRow | IResponsesRow | ITreasuryRequestsRow | ITreasuryResponsesRow
->;
+) => Promise<IResponsesRow | ITreasuryRequestsRow | ITreasuryResponsesRow>;
 
 const getRow: TGetRow = (table, contractId) => {
   const query = `SELECT * FROM ${table} WHERE "id_doc" = '${contractId}' LIMIT 1`;

@@ -16,7 +16,7 @@ jest.mock('api', () => ({
   fetchContractsQueue: jest.fn()
 }));
 
-describe('Scheduler', () => {
+describe('[Unit] Scheduler', () => {
   let sut: Scheduler;
   const contract: ITreasuryResponsesRow = {
     id_doc: 'doc-id',

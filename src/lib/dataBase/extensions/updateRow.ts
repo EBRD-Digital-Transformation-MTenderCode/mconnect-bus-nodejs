@@ -10,28 +10,18 @@ interface IUpdatingParams {
   };
 }
 
-export type TUpdateRow = (
-  updatingParams: IUpdatingParams
-) => Promise<IResultExt>;
+export type TUpdateRow = (updatingParams: IUpdatingParams) => Promise<IResultExt>;
 
 const updateRow: TUpdateRow = ({ table, contractId, columns }) => {
-  const columnsString: string = Object.entries(columns).reduce(
-    (accVal, [key, value], i) => {
-      return `${accVal}${i !== 0 ? ', ' : ''}"${key}" = ${
-        key === 'ts' || key === 'ts_commit'
-          ? `to_timestamp(${tsToPgTs(+value)})`
-          : `'${value}'`
-      }`;
-    },
-    ''
-  );
+  const columnsString: string = Object.entries(columns).reduce((accVal, [key, value], i) => {
+    return `${accVal}${i !== 0 ? ', ' : ''}"${key}" = ${
+      key === 'ts' || key === 'ts_commit' ? `to_timestamp(${tsToPgTs(+value)})` : `'${value}'`
+    }`;
+  }, '');
 
-  const nullCondition: string = Object.entries(columns).reduce(
-    (accVal, [key, value], i) => {
-      return `${i !== 0 ? 'AND' : ''} "${key}" IS NULL`;
-    },
-    ''
-  );
+  const nullCondition: string = Object.entries(columns).reduce((accVal, [key, value], i) => {
+    return `${i !== 0 ? 'AND' : ''} "${key}" IS NULL`;
+  }, '');
 
   const query = `UPDATE ${table} SET ${columnsString} WHERE "id_doc" = '${contractId}' AND ${nullCondition} `;
 
