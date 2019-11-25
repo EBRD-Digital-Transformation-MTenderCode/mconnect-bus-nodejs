@@ -37,19 +37,9 @@ export default class Scheduler {
   }
 
   private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
-    const {
-      id_dok,
-      status,
-      descr,
-      st_date,
-      reg_nom,
-      reg_date
-    } = treasuryContract;
+    const { id_dok, status, descr, st_date, reg_nom, reg_date } = treasuryContract;
 
-    const ocid = id_dok.replace(
-      /-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/,
-      ''
-    ); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
+    const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, ''); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, ''); // ocds-b3wdp1-MD-1539843614475
 
     const kafkaMessageOut: IOut = {
@@ -84,9 +74,7 @@ export default class Scheduler {
       const contractId = treasuryContract.id_dok;
 
       if (treasuryContract.status !== statusCode) {
-        logger.error(
-          '🗙 Error in SCHEDULER. treasuryContract.status not equal verifiable statusCode'
-        );
+        logger.error('🗙 Error in SCHEDULER. treasuryContract.status not equal verifiable statusCode');
         return;
       }
 
@@ -99,10 +87,7 @@ export default class Scheduler {
 
       if (!sentContract.exists) return;
 
-      if (
-        treasuryContract.status === '3005' &&
-        (!treasuryContract.reg_nom || !treasuryContract.reg_date)
-      ) {
+      if (treasuryContract.status === '3005' && (!treasuryContract.reg_nom || !treasuryContract.reg_date)) {
         logger.error(
           `🗙 Error in SCHEDULER. Contract in queue 3005 with id ${treasuryContract.id_dok} hasn't reg_nom OR reg_date fields`
         );
@@ -137,10 +122,7 @@ export default class Scheduler {
     }
   }
 
-  private async sendResponse(
-    contractId: string,
-    kafkaMessageOut: IOut
-  ): Promise<void> {
+  private async sendResponse(contractId: string, kafkaMessageOut: IOut): Promise<void> {
     OutProducer.send(
       [
         {
@@ -149,11 +131,7 @@ export default class Scheduler {
         }
       ],
       async (error: any) => {
-        if (error)
-          return logger.error(
-            '🗙 Error in SCHEDULER. sendResponse - producer: ',
-            error
-          );
+        if (error) return logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', error);
 
         // Update timestamp commit in treasure_in table
         const result = await db.updateRow({
@@ -187,10 +165,7 @@ export default class Scheduler {
     }
   }
 
-  private async commitContract(
-    contractId: string,
-    statusCode: string
-  ): Promise<boolean | undefined> {
+  private async commitContract(contractId: string, statusCode: string): Promise<boolean | undefined> {
     try {
       const res = await fetchContractCommit(contractId);
 
@@ -211,9 +186,7 @@ export default class Scheduler {
         return;
       }
 
-      logger.info(
-        `✔ Contract with id - ${contractId} was removed from queue with statusCode - ${statusCode}`
-      );
+      logger.info(`✔ Contract with id - ${contractId} was removed from queue with statusCode - ${statusCode}`);
 
       return true;
     } catch (error) {
@@ -229,10 +202,7 @@ export default class Scheduler {
         await this.commitContract(contract.id_doc, contract.status_code);
       }
     } catch (error) {
-      logger.error(
-        '🗙 Error in SCHEDULER. commitNotCommittedContracts: ',
-        error
-      );
+      logger.error('🗙 Error in SCHEDULER. commitNotCommittedContracts: ', error);
     }
   }
 
@@ -242,9 +212,7 @@ export default class Scheduler {
 
       await this.sendNotSentResponses();
 
-      for (const statusCode of Object.keys(
-        this.statusCodesMapToCommandName
-      ) as TStatusCode[]) {
+      for (const statusCode of Object.keys(this.statusCodesMapToCommandName) as TStatusCode[]) {
         const contractsQueue = await fetchContractsQueue(statusCode);
 
         if (!contractsQueue) continue;

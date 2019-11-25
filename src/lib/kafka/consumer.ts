@@ -15,6 +15,4 @@ export const InConsumer = new Kafka.ConsumerGroup(
 );
 
 InConsumer.on('connect', () => logger.info('✔ Kafka Consumer connected'));
-InConsumer.on('error', error =>
-  logger.error('🗙 Error kafka consumer: ', error)
-);
+InConsumer.on('error', error => logger.error('🗙 Error kafka consumer: ', error));

@@ -48,8 +48,7 @@ describe('[Unit] Registrator', () => {
 
       beforeEach(async () => {
         contract = {
-          id_doc:
-            'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+          id_doc: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
           message: {
             header: {
               id_dok: 'string',
@@ -106,9 +105,7 @@ describe('[Unit] Registrator', () => {
         it('Should register each contract', async () => {
           await sut.start();
 
-          expect(fetchContractRegister).toHaveBeenCalledTimes(
-            notRegistereds.length
-          );
+          expect(fetchContractRegister).toHaveBeenCalledTimes(notRegistereds.length);
           expect(fetchContractRegister).toHaveBeenCalledWith(contract.message);
         });
 
@@ -437,8 +434,7 @@ describe('[Unit] Registrator', () => {
             command: 'sendAcForVerification',
             id: 'message-id',
             data: {
-              ocid:
-                'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+              ocid: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
               cpid: 'ocds-b3wdp1-MD-1540363926212',
               treasuryBudgetSources: [
                 {
@@ -497,10 +493,7 @@ describe('[Unit] Registrator', () => {
         describe('AC record fetching', () => {
           it('Should fetch AC record', () => {
             expect(fetchEntityRecord).toHaveBeenCalled();
-            expect(fetchEntityRecord).toHaveBeenCalledWith(
-              message.value.data.cpid,
-              message.value.data.ocid
-            );
+            expect(fetchEntityRecord).toHaveBeenCalledWith(message.value.data.cpid, message.value.data.ocid);
           });
 
           describe('When fetch returns undefined', () => {
@@ -530,29 +523,18 @@ describe('[Unit] Registrator', () => {
 
             it('Should fetch tender record', async () => {
               expect(fetchEntityRecord).toBeCalled();
-              expect(fetchEntityRecord).toBeCalledWith(
-                message.value.data.cpid,
-                message.value.data.ocid
-              );
+              expect(fetchEntityRecord).toBeCalledWith(message.value.data.cpid, message.value.data.ocid);
             });
 
             describe('Organizations search', () => {
               it('Should look for buyer', () => {
                 expect(findOrganizationFromRole).toHaveBeenCalled();
-                expect(findOrganizationFromRole).toHaveBeenNthCalledWith(
-                  1,
-                  parties,
-                  'buyer'
-                );
+                expect(findOrganizationFromRole).toHaveBeenNthCalledWith(1, parties, 'buyer');
               });
 
               it('Should look for supplier', () => {
                 expect(findOrganizationFromRole).toHaveBeenCalled();
-                expect(findOrganizationFromRole).toHaveBeenNthCalledWith(
-                  2,
-                  parties,
-                  'supplier'
-                );
+                expect(findOrganizationFromRole).toHaveBeenNthCalledWith(2, parties, 'supplier');
               });
             });
           });
@@ -610,8 +592,7 @@ describe('[Unit] Registrator', () => {
             command: 'dontSendAcForVerification',
             id: 'message-id',
             data: {
-              ocid:
-                'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+              ocid: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
               cpid: 'ocds-b3wdp1-MD-1540363926212',
               treasuryBudgetSources: [
                 {
