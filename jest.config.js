@@ -4,6 +4,7 @@ module.exports = {
     '^.+\\.tsx?$': 'ts-jest'
   },
   testRegex: '.*\\.spec.(ts|tsx|js)$',
+  testEnvironment: 'node',
   coveragePathIgnorePatterns: ['/node_modules/'],
   coverageThreshold: {
     global: {

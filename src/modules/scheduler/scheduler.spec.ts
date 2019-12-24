@@ -81,9 +81,7 @@ describe('[Unit] Scheduler', () => {
 
           describe('When fetch response fails', () => {
             it('Should log error', async () => {
-              (fetchContractCommit as jest.Mock).mockImplementation(async () =>
-                Promise.reject()
-              );
+              (fetchContractCommit as jest.Mock).mockImplementation(async () => Promise.reject());
 
               await sut.start();
 
@@ -121,9 +119,7 @@ describe('[Unit] Scheduler', () => {
 
                 expect(logger.info).toHaveBeenCalled();
                 expect(logger.info).toHaveBeenCalledWith(
-                  `✔ Contract with id - ${
-                    contract.id_doc
-                  } was removed from queue with statusCode - ${3004}`
+                  `✔ Contract with id - ${contract.id_doc} was removed from queue with statusCode - ${3004}`
                 );
               });
             });
@@ -145,9 +141,7 @@ describe('[Unit] Scheduler', () => {
 
             describe('When call to database fails', () => {
               it('Should log error', async () => {
-                (db.updateRow as jest.Mock).mockImplementation(async () =>
-                  Promise.reject()
-                );
+                (db.updateRow as jest.Mock).mockImplementation(async () => Promise.reject());
 
                 await sut.start();
 
@@ -161,9 +155,7 @@ describe('[Unit] Scheduler', () => {
 
     describe('When database does not respond', () => {
       it('Should log error and not iterate', async () => {
-        (db.getNotCommitteds as jest.Mock).mockImplementation(async () =>
-          Promise.reject()
-        );
+        (db.getNotCommitteds as jest.Mock).mockImplementation(async () => Promise.reject());
 
         await sut.start();
 
@@ -245,10 +237,7 @@ describe('[Unit] Scheduler', () => {
         await outCallback(error);
 
         expect(logger.error).toHaveBeenCalled();
-        expect(logger.error).toHaveBeenCalledWith(
-          `🗙 Error in SCHEDULER. sendResponse - producer: `,
-          error
-        );
+        expect(logger.error).toHaveBeenCalledWith(`🗙 Error in SCHEDULER. sendResponse - producer: `, error);
       });
 
       describe('Adding contract timestamp', () => {
@@ -284,8 +273,7 @@ describe('[Unit] Scheduler', () => {
 
             await sut.start();
 
-            const outCallback = (OutProducer.send as jest.Mock).mock
-              .calls[0][1];
+            const outCallback = (OutProducer.send as jest.Mock).mock.calls[0][1];
             await outCallback();
 
             expect(logger.error).toHaveBeenCalled();
@@ -304,8 +292,7 @@ describe('[Unit] Scheduler', () => {
 
             await sut.start();
 
-            const outCallback = (OutProducer.send as jest.Mock).mock
-              .calls[0][1];
+            const outCallback = (OutProducer.send as jest.Mock).mock.calls[0][1];
             await outCallback();
 
             expect(logger.error).toHaveBeenCalled();
@@ -329,9 +316,7 @@ describe('[Unit] Scheduler', () => {
 
     describe('When request to database fails', () => {
       it('Should log error and not iterate', async () => {
-        (db.getNotSentMessages as jest.Mock).mockImplementation(async () =>
-          Promise.reject()
-        );
+        (db.getNotSentMessages as jest.Mock).mockImplementation(async () => Promise.reject());
 
         await sut.start();
 
@@ -342,11 +327,8 @@ describe('[Unit] Scheduler', () => {
   });
 
   describe('Contracts processing', () => {
-    let queueContract = (
-      statusCode: TStatusCode = '3004'
-    ): ITreasuryContract => ({
-      id_dok:
-        'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+    let queueContract = (statusCode: TStatusCode = '3004'): ITreasuryContract => ({
+      id_dok: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
       id_hist: 'string',
       status: statusCode,
       st_date: 'string',
@@ -374,11 +356,7 @@ describe('[Unit] Scheduler', () => {
       describe('When contracts queue response has contracts', () => {
         beforeEach(() => {
           (fetchContractsQueue as jest.Mock).mockResolvedValue({
-            contract: [
-              queueContract('3004'),
-              queueContract('3005'),
-              queueContract('3006')
-            ]
+            contract: [queueContract('3004'), queueContract('3005'), queueContract('3006')]
           });
         });
 
@@ -428,9 +406,7 @@ describe('[Unit] Scheduler', () => {
                     await sut.start();
 
                     expect(fetchContractCommit).toHaveBeenCalled();
-                    expect(fetchContractCommit).toHaveBeenCalledWith(
-                      queueContract().id_dok
-                    );
+                    expect(fetchContractCommit).toHaveBeenCalledWith(queueContract().id_dok);
                   });
 
                   describe('Kafka message generation and insertion to responses', () => {
@@ -448,16 +424,13 @@ describe('[Unit] Scheduler', () => {
                     } as IOut;
 
                     beforeEach(() => {
-                      (fetchContractCommit as jest.Mock).mockResolvedValue(
-                        true
-                      );
+                      (fetchContractCommit as jest.Mock).mockResolvedValue(true);
                     });
 
                     it('Should generate proper kafka message out for status code 3004', async () => {
                       queueContract = (): ITreasuryContract =>
                         ({
-                          id_dok:
-                            'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+                          id_dok: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
                           id_hist: 'string',
                           status: '3004',
                           st_date: 'string',
@@ -490,8 +463,7 @@ describe('[Unit] Scheduler', () => {
                     it('Should generate proper kafka message out for status code 3005', async () => {
                       queueContract = (): ITreasuryContract =>
                         ({
-                          id_dok:
-                            'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+                          id_dok: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
                           id_hist: 'string',
                           status: '3005',
                           st_date: 'string',
@@ -528,8 +500,7 @@ describe('[Unit] Scheduler', () => {
                     it('Should generate proper kafka message out for status code 3006', async () => {
                       queueContract = (): ITreasuryContract =>
                         ({
-                          id_dok:
-                            'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+                          id_dok: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
                           id_hist: 'string',
                           status: '3006',
                           st_date: 'string',
@@ -563,9 +534,7 @@ describe('[Unit] Scheduler', () => {
 
                   describe('When contract commission fails', () => {
                     it('Should not generate kafka message out and insert to responses', async () => {
-                      (fetchContractCommit as jest.Mock).mockResolvedValue(
-                        undefined
-                      );
+                      (fetchContractCommit as jest.Mock).mockResolvedValue(undefined);
 
                       await sut.start();
 
@@ -576,9 +545,7 @@ describe('[Unit] Scheduler', () => {
                   describe('Commission process', () => {
                     describe('When fetch response is valid', () => {
                       beforeEach(() => {
-                        (fetchContractCommit as jest.Mock).mockResolvedValue(
-                          true
-                        );
+                        (fetchContractCommit as jest.Mock).mockResolvedValue(true);
                       });
 
                       it('Should update row in database', async () => {
@@ -613,9 +580,7 @@ describe('[Unit] Scheduler', () => {
 
                       describe('When call to database fails', () => {
                         it('Should log error', async () => {
-                          (db.updateRow as jest.Mock).mockImplementation(
-                            async () => Promise.reject()
-                          );
+                          (db.updateRow as jest.Mock).mockImplementation(async () => Promise.reject());
 
                           await sut.start();
 
@@ -626,9 +591,7 @@ describe('[Unit] Scheduler', () => {
 
                     describe('When fetch response is undefined', () => {
                       it('Should return', async () => {
-                        (fetchContractCommit as jest.Mock).mockResolvedValue(
-                          undefined
-                        );
+                        (fetchContractCommit as jest.Mock).mockResolvedValue(undefined);
 
                         await sut.start();
 
@@ -638,9 +601,7 @@ describe('[Unit] Scheduler', () => {
 
                     describe('When fetch response fails', () => {
                       it('Should log error', async () => {
-                        (fetchContractCommit as jest.Mock).mockImplementation(
-                          async () => Promise.reject()
-                        );
+                        (fetchContractCommit as jest.Mock).mockImplementation(async () => Promise.reject());
 
                         await sut.start();
 
@@ -655,8 +616,7 @@ describe('[Unit] Scheduler', () => {
                     it('Should log error', async () => {
                       queueContract = (): ITreasuryContract =>
                         ({
-                          id_dok:
-                            'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+                          id_dok: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
                           id_hist: 'string',
                           status: '3005',
                           st_date: 'string',
@@ -683,8 +643,7 @@ describe('[Unit] Scheduler', () => {
                     it('Should log error', async () => {
                       queueContract = (): ITreasuryContract =>
                         ({
-                          id_dok:
-                            'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
+                          id_dok: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294-2018-11-21T06:12:46Z',
                           id_hist: 'string',
                           status: '3005',
                           st_date: 'string',
@@ -724,17 +683,12 @@ describe('[Unit] Scheduler', () => {
               describe('When database does not respond', () => {
                 it('Should log error', async () => {
                   const error = new Error('db does not respond');
-                  (db.isExist as jest.Mock).mockImplementation(async () =>
-                    Promise.reject(error)
-                  );
+                  (db.isExist as jest.Mock).mockImplementation(async () => Promise.reject(error));
 
                   await sut.start();
 
                   expect(logger.error).toHaveBeenCalled();
-                  expect(logger.error).toHaveBeenCalledWith(
-                    '🗙 Error in SCHEDULER. doContractProcessing: ',
-                    error
-                  );
+                  expect(logger.error).toHaveBeenCalledWith('🗙 Error in SCHEDULER. doContractProcessing: ', error);
                 });
               });
             });
@@ -742,9 +696,7 @@ describe('[Unit] Scheduler', () => {
 
           describe('When contract id does not match predefined pattern', () => {
             it('Should return', async () => {
-              queueContract = (
-                statusCode: TStatusCode = '3004'
-              ): ITreasuryContract => ({
+              queueContract = (statusCode: TStatusCode = '3004'): ITreasuryContract => ({
                 id_dok: 'notValidId',
                 id_hist: 'string',
                 status: statusCode,
@@ -773,17 +725,12 @@ describe('[Unit] Scheduler', () => {
           it('Should stop processing', async () => {
             const error = new Error('error in fetching queue');
 
-            (fetchContractsQueue as jest.Mock).mockImplementation(async () =>
-              Promise.reject(error)
-            );
+            (fetchContractsQueue as jest.Mock).mockImplementation(async () => Promise.reject(error));
 
             await sut.start();
 
             expect(logger.error).toHaveBeenCalled();
-            expect(logger.error).toHaveBeenCalledWith(
-              '🗙 Error in SCHEDULER. run: ',
-              error
-            );
+            expect(logger.error).toHaveBeenCalledWith('🗙 Error in SCHEDULER. run: ', error);
           });
         });
 
@@ -811,10 +758,7 @@ describe('[Unit] Scheduler', () => {
             await sut.start();
 
             expect(logger.info).toHaveBeenCalled();
-            expect(logger.info).toHaveBeenNthCalledWith(
-              3,
-              `✔ Last sync at - ${new Date().toUTCString().toString()}`
-            );
+            expect(logger.info).toHaveBeenNthCalledWith(3, `✔ Last sync at - ${new Date().toUTCString().toString()}`);
           });
         });
       });
@@ -824,8 +768,6 @@ describe('[Unit] Scheduler', () => {
   it('Should log last sync', async () => {
     await sut.start();
 
-    expect(logger.info).toHaveBeenLastCalledWith(
-      `✔ Last sync at - ${new Date().toUTCString().toString()}`
-    );
+    expect(logger.info).toHaveBeenLastCalledWith(`✔ Last sync at - ${new Date().toUTCString().toString()}`);
   });
 });

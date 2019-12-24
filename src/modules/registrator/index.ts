@@ -46,19 +46,14 @@ export default class Registrator {
 
         const kafkaMessageOut = Registrator.generateKafkaMessageOut(contractId);
 
-        const sentContract = await Registrator.validateContractExistance(
-          contract,
-          kafkaMessageOut
-        );
+        const sentContract = await Registrator.validateContractExistance(contract, kafkaMessageOut);
 
         if (sentContract) {
           try {
             await Registrator.addContractTimestamp(
               contract,
               'treasuryRequests',
-              sentContract.exists
-                ? 'Contract exists'
-                : 'Contract does not exist'
+              sentContract.exists ? 'Contract exists' : 'Contract does not exist'
             );
           } catch (error) {
             logger.error(error.message);
@@ -71,18 +66,12 @@ export default class Registrator {
         await Registrator.sendKafkaMessageOut(contract, kafkaMessageOut);
       }
     } catch (error) {
-      logger.error(
-        '🗙 Error in REGISTRATOR. Failed to register contracts: ',
-        error
-      );
+      logger.error('🗙 Error in REGISTRATOR. Failed to register contracts: ', error);
     }
   }
 
   private static generateKafkaMessageOut(contractId: string): IOut {
-    const ocid = contractId.replace(
-      /-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/,
-      ''
-    );
+    const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
 
     return {
@@ -96,9 +85,7 @@ export default class Registrator {
     };
   }
 
-  private static async registerContractInTreasury(
-    contract: ITreasuryRequestsRow
-  ): Promise<void> {
+  private static async registerContractInTreasury(contract: ITreasuryRequestsRow): Promise<void> {
     const { id_doc: contractId, message } = contract;
 
     try {
@@ -108,16 +95,11 @@ export default class Registrator {
         throw new Error(`response from treasury was not received.`);
       }
 
-      if (
-        contractRegistrationResponse &&
-        contractRegistrationResponse.id_dok !== contractId
-      ) {
+      if (contractRegistrationResponse && contractRegistrationResponse.id_dok !== contractId) {
         throw new Error(`response id does not match contract id.`);
       }
     } catch (error) {
-      throw new Error(
-        `🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - ${error.message}`
-      );
+      throw new Error(`🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - ${error.message}`);
     }
   }
 
@@ -143,16 +125,12 @@ export default class Registrator {
           });
         }
       } catch (error) {
-        logger.error(
-          `🗙 Error in REGISTRATOR. Failed to insert not existent contract ${contractId} to responses.`
-        );
+        logger.error(`🗙 Error in REGISTRATOR. Failed to insert not existent contract ${contractId} to responses.`);
       }
 
       return sentContract;
     } catch (error) {
-      logger.error(
-        `🗙 Error in REGISTRATOR. Failed to check if contract ${contractId} exists in database.`
-      );
+      logger.error(`🗙 Error in REGISTRATOR. Failed to check if contract ${contractId} exists in database.`);
     }
   }
 
@@ -178,10 +156,7 @@ export default class Registrator {
     }
   }
 
-  private static sendKafkaMessageOut(
-    contract: ITreasuryRequestsRow,
-    kafkaMessage: IOut
-  ): void {
+  private static sendKafkaMessageOut(contract: ITreasuryRequestsRow, kafkaMessage: IOut): void {
     OutProducer.send(
       [
         {
@@ -191,17 +166,10 @@ export default class Registrator {
       ],
       async (producerError: any) => {
         if (producerError)
-          return logger.error(
-            '🗙 Error in REGISTRATOR. Failed to send message out to Kafka: ',
-            producerError
-          );
+          return logger.error('🗙 Error in REGISTRATOR. Failed to send message out to Kafka: ', producerError);
 
         try {
-          await Registrator.addContractTimestamp(
-            contract,
-            'responses',
-            'Producer'
-          );
+          await Registrator.addContractTimestamp(contract, 'responses', 'Producer');
         } catch (error) {
           logger.error(error.message);
         }
@@ -209,21 +177,16 @@ export default class Registrator {
     );
   }
 
-  private static async saveContractForRegistration(
-    data: IMessage
-  ): Promise<void> {
+  private static async saveContractForRegistration(data: IMessage): Promise<void> {
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
       if (messageData.command !== 'sendAcForVerification') return;
 
-      const { exists: contractIsExist } = await db.isExist(
-        dbConfig.tables.requests,
-        {
-          field: 'cmd_id',
-          value: messageData.id
-        }
-      );
+      const { exists: contractIsExist } = await db.isExist(dbConfig.tables.requests, {
+        field: 'cmd_id',
+        value: messageData.id
+      });
 
       if (contractIsExist) {
         logger.warn(
@@ -231,9 +194,7 @@ export default class Registrator {
         );
       }
 
-      const payload = await Registrator.generateRegistrationPayload(
-        messageData
-      );
+      const payload = await Registrator.generateRegistrationPayload(messageData);
 
       if (!payload) {
         logger.error(
@@ -256,23 +217,15 @@ export default class Registrator {
         message: payload
       });
     } catch (error) {
-      logger.error(
-        '🗙 Error in REGISTRATOR. Failed to save contract for registration: ',
-        error
-      );
+      logger.error('🗙 Error in REGISTRATOR. Failed to save contract for registration: ', error);
     }
   }
 
-  private static async generateRegistrationPayload(
-    messageData: IIn
-  ): Promise<IContractRegisterPayload | undefined> {
+  private static async generateRegistrationPayload(messageData: IIn): Promise<IContractRegisterPayload | undefined> {
     try {
       const { cpid, ocid } = messageData.data;
 
-      const acRecord: IAcRecord | undefined = await fetchEntityRecord(
-        cpid,
-        ocid
-      );
+      const acRecord: IAcRecord | undefined = await fetchEntityRecord(cpid, ocid);
 
       if (!acRecord) return;
 
@@ -282,9 +235,7 @@ export default class Registrator {
 
       const tenderOcid = (
         relatedProcesses.find((process: IRelatedProcess) => {
-          return process.relationship.some(
-            rel => rel === 'x_evaluation' || rel === 'x_negotiation'
-          );
+          return process.relationship.some(rel => rel === 'x_evaluation' || rel === 'x_negotiation');
         }) || ({} as IRelatedProcess)
       ).identifier;
 
@@ -296,47 +247,35 @@ export default class Registrator {
 
       const id_dok = `${contract.id}-${messageData.context.startDate}`;
 
-      const buyer =
-        findOrganizationFromRole(parties, 'buyer') || ({} as IParty);
+      const buyer = findOrganizationFromRole(parties, 'buyer') || ({} as IParty);
 
       const buyerBranchesIdentifier =
-        (buyer.additionalIdentifiers || []).find(
-          (addIdentifier: IAdditionalIdentifier) => {
-            return addIdentifier.scheme === 'MD-BRANCHES';
-          }
-        ) || ({} as IAdditionalIdentifier);
+        (buyer.additionalIdentifiers || []).find((addIdentifier: IAdditionalIdentifier) => {
+          return addIdentifier.scheme === 'MD-BRANCHES';
+        }) || ({} as IAdditionalIdentifier);
 
-      const supplier =
-        findOrganizationFromRole(parties, 'supplier') || ({} as IParty);
+      const supplier = findOrganizationFromRole(parties, 'supplier') || ({} as IParty);
 
       const supplierBranchesIdentifier =
-        (supplier.additionalIdentifiers || []).find(
-          (addIdentifier: IAdditionalIdentifier) => {
-            return addIdentifier.scheme === 'MD-BRANCHES';
-          }
-        ) || ({} as IAdditionalIdentifier);
+        (supplier.additionalIdentifiers || []).find((addIdentifier: IAdditionalIdentifier) => {
+          return addIdentifier.scheme === 'MD-BRANCHES';
+        }) || ({} as IAdditionalIdentifier);
 
       const advanceValue = (
         (
-          planning.implementation.transactions.find(
-            (transaction: ITransaction) => {
-              return transaction.type === 'advance';
-            }
-          ) || ({} as ITransaction)
+          planning.implementation.transactions.find((transaction: ITransaction) => {
+            return transaction.type === 'advance';
+          }) || ({} as ITransaction)
         ).value || {}
       ).amount;
 
-      const docsOfContractSigned = contract.documents.filter(
-        (document: IDocument) => {
-          return document.documentType === 'contractSigned';
-        }
-      );
+      const docsOfContractSigned = contract.documents.filter((document: IDocument) => {
+        return document.documentType === 'contractSigned';
+      });
 
-      const sortedDocsOfContractSigned = [...docsOfContractSigned].sort(
-        (doc1: IDocument, doc2: IDocument) => {
-          return +new Date(doc2.datePublished) - +new Date(doc1.datePublished);
-        }
-      );
+      const sortedDocsOfContractSigned = [...docsOfContractSigned].sort((doc1: IDocument, doc2: IDocument) => {
+        return +new Date(doc2.datePublished) - +new Date(doc1.datePublished);
+      });
 
       const benef = parties
         .filter(part => {
@@ -348,29 +287,20 @@ export default class Registrator {
           biban: part.details.bankAccounts[0].accountIdentification.id
         }));
 
-      const details = messageData.data.treasuryBudgetSources.map(
-        (treasuryBudgetSrc: ITreasuryBudgetSources) => {
-          const needBudgetAllocation = planning.budget.budgetAllocation.find(
-            (allocation: IBudgetAllocation) => {
-              return (
-                allocation.budgetBreakdownID ===
-                treasuryBudgetSrc.budgetBreakdownID
-              );
-            }
-          );
+      const details = messageData.data.treasuryBudgetSources.map((treasuryBudgetSrc: ITreasuryBudgetSources) => {
+        const needBudgetAllocation = planning.budget.budgetAllocation.find((allocation: IBudgetAllocation) => {
+          return allocation.budgetBreakdownID === treasuryBudgetSrc.budgetBreakdownID;
+        });
 
-          const { startDate } = (
-            needBudgetAllocation || ({} as IBudgetAllocation)
-          ).period;
+        const { startDate } = (needBudgetAllocation || ({} as IBudgetAllocation)).period;
 
-          return {
-            id_dok,
-            suma: treasuryBudgetSrc.amount,
-            piban: treasuryBudgetSrc.budgetIBAN,
-            byear: +startDate.substr(0, 4)
-          };
-        }
-      );
+        return {
+          id_dok,
+          suma: treasuryBudgetSrc.amount,
+          piban: treasuryBudgetSrc.budgetIBAN,
+          byear: +startDate.substr(0, 4)
+        };
+      });
 
       const contractRegisterPayload: IContractRegisterPayload = {
         header: {
@@ -393,36 +323,30 @@ export default class Registrator {
           achiz_date: tenderRecord.publishedDate,
 
           da_expire: contract.period.endDate,
-          c_link:
-            sortedDocsOfContractSigned[sortedDocsOfContractSigned.length - 1]
-              .url
+          c_link: sortedDocsOfContractSigned[sortedDocsOfContractSigned.length - 1].url
         },
         benef,
         details
       };
 
-      if (buyerBranchesIdentifier.id)
-        contractRegisterPayload.header.pkd_sdiv = buyerBranchesIdentifier.id;
-      if (supplierBranchesIdentifier.id)
-        contractRegisterPayload.header.bkd_sdiv = supplierBranchesIdentifier.id;
+      if (buyerBranchesIdentifier.id) contractRegisterPayload.header.pkd_sdiv = buyerBranchesIdentifier.id;
+      if (supplierBranchesIdentifier.id) contractRegisterPayload.header.bkd_sdiv = supplierBranchesIdentifier.id;
       if (advanceValue && contract.value.amount > advanceValue) {
-        contractRegisterPayload.header.avans =
-          (advanceValue * 100) / contract.value.amount;
+        contractRegisterPayload.header.avans = (advanceValue * 100) / contract.value.amount;
       }
 
       // @TODO delete on prod
       logger.info(
-        `✔ Payload for register contract with id - ${
-          contract.id
-        } \n ${JSON.stringify(contractRegisterPayload, null, 2)}`
+        `✔ Payload for register contract with id - ${contract.id} \n ${JSON.stringify(
+          contractRegisterPayload,
+          null,
+          2
+        )}`
       );
 
       return contractRegisterPayload;
     } catch (error) {
-      logger.error(
-        '🗙 Error in registrator generateRegistrationPayload: ',
-        error
-      );
+      logger.error('🗙 Error in registrator generateRegistrationPayload: ', error);
     }
   }
 
@@ -434,9 +358,7 @@ export default class Registrator {
 
       setInterval(() => Registrator.registerContracts(), this.interval);
 
-      InConsumer.on('message', (message: IMessage) =>
-        Registrator.saveContractForRegistration(message)
-      );
+      InConsumer.on('message', (message: IMessage) => Registrator.saveContractForRegistration(message));
     } catch (error) {
       logger.error('🗙 Error in registrator start: ', error);
     }

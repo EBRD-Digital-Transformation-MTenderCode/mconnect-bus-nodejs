@@ -8,6 +8,4 @@ export const OutProducer = new Kafka.HighLevelProducer(Client);
 
 OutProducer.on('ready', () => logger.info('✔ Kafka Producer ready'));
 
-OutProducer.on('error', error =>
-  logger.error('🗙 Error kafka producer: ', error)
-);
+OutProducer.on('error', error => logger.error('🗙 Error kafka producer: ', error));
