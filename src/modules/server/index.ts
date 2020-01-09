@@ -1,8 +1,8 @@
 import http from 'http';
 
-import { serviceConfig } from 'configs';
+import { serviceConfig } from '../../configs';
 
-import logger from 'lib/logger';
+import logger from '../../lib/logger';
 
 export default class Server {
   start() {
@@ -18,8 +18,7 @@ export default class Server {
           };
 
           res.writeHead(200, {
-            'Content-Type':
-              'application/vnd.spring-boot.actuator.v2+json;charset=UTF-8'
+            'Content-Type': 'application/vnd.spring-boot.actuator.v2+json;charset=UTF-8'
           });
           res.end(JSON.stringify(healthCheckInfo));
         } else {
@@ -31,10 +30,7 @@ export default class Server {
             path: url
           };
 
-          logger.error(
-            `${errorMessage.status} ${errorMessage.error}. Path - "${errorMessage.path}". `,
-            errorMessage
-          );
+          logger.error(`${errorMessage.status} ${errorMessage.error}. Path - "${errorMessage.path}". `, errorMessage);
 
           res.writeHead(404, { 'Content-Type': 'text/json' });
           res.end(JSON.stringify(errorMessage));

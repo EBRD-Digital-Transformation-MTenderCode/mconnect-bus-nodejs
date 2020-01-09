@@ -5,7 +5,9 @@ import logger from '../lib/logger';
 
 import { IContractRegisterPayload, IContractRegisterResponse } from '../types';
 
-export async function fetchContractRegister(treasuryBody: IContractRegisterPayload): Promise<IContractRegisterResponse | undefined> {
+export async function fetchContractRegister(
+  treasuryBody: IContractRegisterPayload
+): Promise<IContractRegisterResponse | undefined> {
   try {
     const { data } = await axios(request.postContractRegisterConfig(treasuryBody));
 

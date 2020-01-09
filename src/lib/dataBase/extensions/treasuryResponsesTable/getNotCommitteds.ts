@@ -1,6 +1,6 @@
-import { dbConfig } from 'configs';
+import { dbConfig } from '../../../../configs';
 
-import { ITreasuryResponsesRow } from 'types/db';
+import { ITreasuryResponsesRow } from '../../../../types/db';
 import db from '../../index';
 
 export type TGetNotCommitteds = () => Promise<ITreasuryResponsesRow[] | []>;

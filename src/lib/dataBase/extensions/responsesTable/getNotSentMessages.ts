@@ -1,13 +1,9 @@
-import { dbConfig } from 'configs';
+import { dbConfig } from '../../../../configs';
 
-import { IResponsesRow } from 'types/db';
+import { IResponsesRow } from '../../../../types/db';
 import db from '../../index';
 
-export type TGtNotSentMessages = ({
-  launch
-}: {
-  launch: boolean;
-}) => Promise<IResponsesRow[] | []>;
+export type TGtNotSentMessages = ({ launch }: { launch: boolean }) => Promise<IResponsesRow[] | []>;
 
 const getNotSentMessages: TGtNotSentMessages = ({ launch }) => {
   const responsesTable = dbConfig.tables.responses;

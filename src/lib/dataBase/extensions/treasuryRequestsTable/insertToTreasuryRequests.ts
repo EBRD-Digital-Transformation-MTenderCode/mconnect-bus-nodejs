@@ -1,16 +1,11 @@
-import { dbConfig } from 'configs';
+import { dbConfig } from '../../../../configs';
 
-import { ITreasuryRequestsRow } from 'types/db';
+import { ITreasuryRequestsRow } from '../../../../types/db';
 import db from '../../index';
 
-export type TInsertToTreasuryRequests = (
-  row: ITreasuryRequestsRow
-) => Promise<null>;
+export type TInsertToTreasuryRequests = (row: ITreasuryRequestsRow) => Promise<null>;
 
-const insertToTreasuryRequests: TInsertToTreasuryRequests = ({
-  id_doc,
-  message
-}) => {
+const insertToTreasuryRequests: TInsertToTreasuryRequests = ({ id_doc, message }) => {
   const treasuryRequestsTable = dbConfig.tables.treasuryRequests;
 
   const query = `

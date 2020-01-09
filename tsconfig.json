@@ -2,15 +2,11 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "plugins": [{ "transform": "transformer-module" }],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "sourceMap": true,
     "outDir": "./build",
-    "baseUrl": "./src",
     "rootDir": "./src",
-    "paths": {
-      "*": ["./*"]
-    },
-    "strict": true,
-    "esModuleInterop": true
+    "strict": true
   }
 }

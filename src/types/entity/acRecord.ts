@@ -94,9 +94,9 @@ export interface IParty {
   };
   additionalIdentifiers: IAdditionalIdentifier[];
   details: {
-    [key: string]: any;
-
     bankAccounts: IBankAccount[];
+
+    [key: string]: any;
   };
   roles: TRole[];
 

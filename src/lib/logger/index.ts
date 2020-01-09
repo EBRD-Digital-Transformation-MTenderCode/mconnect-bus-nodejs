@@ -1,7 +1,7 @@
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
-import { loggerConfig } from 'configs';
+import { loggerConfig } from '../../configs';
 
 const { format, transports } = winston;
 const { combine, timestamp, printf, colorize, align, errors } = format;
@@ -32,10 +32,7 @@ const logger = winston.createLogger({
       format: combine(
         colorize({ all: true }),
         align(),
-        printf(
-          ({ level, message, timestamp }) =>
-            `${level}: ${timestamp} --> ${message}`
-        )
+        printf(({ level, message, timestamp }) => `${level}: ${timestamp} --> ${message}`)
       )
     }),
     // @ts-ignore

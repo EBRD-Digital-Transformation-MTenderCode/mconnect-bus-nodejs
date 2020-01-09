@@ -1,4 +1,4 @@
-import { registrationSchedulerInterval, queueSchedulerInterval } from 'configs';
+import { registrationSchedulerInterval, queueSchedulerInterval } from './configs';
 
 import Server from './modules/server';
 import Scheduler from './modules/scheduler';

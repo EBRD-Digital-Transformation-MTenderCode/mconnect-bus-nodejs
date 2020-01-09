@@ -1,6 +1,6 @@
-import { dbConfig } from 'configs';
+import { dbConfig } from '../../../../configs';
 
-import { ITreasuryRequestsRow } from 'types/db';
+import { ITreasuryRequestsRow } from '../../../../types/db';
 import db from '../../index';
 
 export type TGetNotRegistereds = () => Promise<ITreasuryRequestsRow[] | []>;

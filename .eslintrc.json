@@ -31,15 +31,16 @@
     "@typescript-eslint/member-ordering": "error",
     "no-useless-constructor": "off",
     "@typescript-eslint/camelcase": "off",
-    "consistent-return": "warn",
+    "consistent-return": "off",
     "no-restricted-syntax": "off",
     "no-await-in-loop": "off",
     "import/prefer-default-export": "off",
-    "@typescript-eslint/interface-name-prefix": "warn",
+    "@typescript-eslint/interface-name-prefix": "off",
     "class-methods-use-this": "warn",
     "@typescript-eslint/ban-ts-ignore": "warn",
     "no-shadow": "warn",
     "no-continue": "warn",
+    "no-param-reassign": "off",
     "prefer-destructuring": "off"
   }
 }

@@ -2,15 +2,15 @@ import { v4 as uuid } from 'uuid';
 
 import { Message as IMessage } from 'kafka-node';
 
-import { fetchContractRegister, fetchEntityRecord } from 'api';
+import { fetchContractRegister, fetchEntityRecord } from '../../api';
 
-import db from 'lib/dataBase';
-import { InConsumer, OutProducer } from 'lib/kafka';
-import logger from 'lib/logger';
+import db from '../../lib/dataBase';
+import { InConsumer, OutProducer } from '../../lib/kafka';
+import logger from '../../lib/logger';
 
-import { dbConfig, kafkaOutProducerConfig } from 'configs';
+import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
-import { findOrganizationFromRole } from 'utils';
+import { findOrganizationFromRole } from '../../utils';
 
 import {
   IAcRecord,
@@ -25,7 +25,7 @@ import {
   ITransaction,
   ITreasuryBudgetSources,
   ITreasuryRequestsRow
-} from 'types';
+} from '../../types';
 
 export default class Registrator {
   constructor(private readonly interval: number) {}

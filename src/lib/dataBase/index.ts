@@ -1,6 +1,6 @@
 import pgPromise, { IDatabase, IMain } from 'pg-promise';
 
-import { dbConfig } from 'configs';
+import { dbConfig } from '../../configs';
 import { extentions, IExtensions } from './extensions';
 
 import logger from '../logger';

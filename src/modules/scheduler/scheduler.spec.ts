@@ -1,12 +1,12 @@
-import { dbConfig, kafkaOutProducerConfig } from 'configs';
-import { OutProducer } from 'lib/kafka';
-import Scheduler from 'modules/scheduler';
-import db from 'lib/dataBase';
-import logger from 'lib/logger';
-import { fetchContractCommit, fetchContractsQueue } from 'api';
-import { IResponsesRow, ITreasuryResponsesRow } from 'types/db';
-import { IOut } from 'types/messages';
-import { ITreasuryContract, TStatusCode } from 'types/treasury';
+import { dbConfig, kafkaOutProducerConfig } from '../../configs';
+import { OutProducer } from '../../lib/kafka';
+import Scheduler from './index';
+import db from '../../lib/dataBase';
+import logger from '../../lib/logger';
+import { fetchContractCommit, fetchContractsQueue } from '../../api';
+import { IResponsesRow, ITreasuryResponsesRow } from '../../types/db';
+import { IOut } from '../../types/messages';
+import { ITreasuryContract, TStatusCode } from '../../types/treasury';
 
 jest.mock('lib/dataBase');
 jest.mock('lib/logger');

@@ -1,4 +1,4 @@
-import { IResponsesRow, ITreasuryRequestsRow, ITreasuryResponsesRow } from 'types/db';
+import { IResponsesRow, ITreasuryRequestsRow, ITreasuryResponsesRow } from '../../../types/db';
 import db from '../index';
 
 export type TGetRow = (

@@ -1,14 +1,14 @@
 import { v4 as uuid } from 'uuid';
 
-import db from 'lib/dataBase';
-import { OutProducer } from 'lib/kafka';
-import logger from 'lib/logger';
+import db from '../../lib/dataBase';
+import { OutProducer } from '../../lib/kafka';
+import logger from '../../lib/logger';
 
-import { fetchContractCommit, fetchContractsQueue } from 'api';
+import { fetchContractCommit, fetchContractsQueue } from '../../api';
 
-import { dbConfig, kafkaOutProducerConfig } from 'configs';
+import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
-import { IOut, ITreasuryContract, TCommandName, TStatusCode } from 'types';
+import { IOut, ITreasuryContract, TCommandName, TStatusCode } from '../../types';
 
 type IStatusCodesMapToCommandName = {
   [key in TStatusCode]: TCommandName;

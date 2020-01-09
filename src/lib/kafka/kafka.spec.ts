@@ -1,9 +1,9 @@
-import { kafkaClientConfig, kafkaInConsumerConfig, kafkaOutProducerConfig } from 'configs';
 import { Offset } from 'kafka-node';
-import { OutProducer as Producer } from 'lib/kafka/producer';
-import { InConsumer as Consumer } from 'lib/kafka/consumer';
-import { Client } from 'lib/kafka/client';
-import logger from 'lib/logger';
+import { kafkaClientConfig, kafkaInConsumerConfig, kafkaOutProducerConfig } from '../../configs';
+import { OutProducer as Producer } from './producer';
+import { InConsumer as Consumer } from './consumer';
+import { Client } from './client';
+import logger from '../logger';
 
 jest.mock('lib/logger');
 

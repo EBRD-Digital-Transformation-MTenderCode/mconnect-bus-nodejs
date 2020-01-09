@@ -1,6 +1,6 @@
-import { IRequestsRow, IResponsesRow, ITreasuryRequestsRow, ITreasuryResponsesRow } from 'types/db';
-import { IIn, IOut, TCommandName } from 'types/messages';
-import { tsToPgTs } from 'utils';
+import { IRequestsRow, IResponsesRow, ITreasuryRequestsRow, ITreasuryResponsesRow } from '../../types/db';
+import { IIn, IOut, TCommandName } from '../../types/messages';
+import { tsToPgTs } from '../../utils';
 import db from './index';
 
 describe('[Integration] Database', () => {

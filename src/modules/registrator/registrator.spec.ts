@@ -1,14 +1,14 @@
-import logger from 'lib/logger';
-import db from 'lib/dataBase';
-import { InConsumer, OutProducer } from 'lib/kafka';
+import logger from '../../lib/logger';
+import db from '../../lib/dataBase';
+import { InConsumer, OutProducer } from '../../lib/kafka';
 
-import { fetchContractRegister, fetchEntityRecord } from 'api';
+import { fetchContractRegister, fetchEntityRecord } from '../../api';
 
-import { dbConfig } from 'configs';
+import { dbConfig } from '../../configs';
 
-import { ITreasuryRequestsRow } from 'types/db';
-import { IRelease } from 'types/entity';
-import { findOrganizationFromRole } from 'utils';
+import { ITreasuryRequestsRow } from '../../types/db';
+import { IRelease } from '../../types/entity';
+import { findOrganizationFromRole } from '../../utils';
 
 import Registrator from './index';
 

@@ -1,5 +1,6 @@
 import { IResultExt } from 'pg-promise';
-import { tsToPgTs } from 'utils';
+
+import { tsToPgTs } from '../../../utils';
 import db from '../index';
 
 interface IUpdatingParams {

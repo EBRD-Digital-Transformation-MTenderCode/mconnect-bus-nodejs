@@ -1,6 +1,6 @@
 import * as Kafka from 'kafka-node';
 
-import { kafkaClientConfig } from 'configs';
+import { kafkaClientConfig } from '../../configs';
 
 import logger from '../logger';
 
