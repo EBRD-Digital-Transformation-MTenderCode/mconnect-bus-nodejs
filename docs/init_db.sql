@@ -46,3 +46,19 @@ CREATE INDEX responses_launch_index ON responses (id_doc, cmd_name, ts)
 
 CREATE INDEX responses_not_launched_index ON responses (id_doc, cmd_name, ts)
     WHERE ts IS NULL AND cmd_name != 'launchACVerification';
+
+CREATE TABLE IF NOT EXISTS errors
+(
+    id                TEXT      NOT NULL PRIMARY KEY,
+    hash              TEXT      NOT NULL,
+    ts                TIMESTAMP NOT NULL,
+    data              JSON      NOT NULL,
+    message_kafka     JSON      NOT NULL,
+    ts_send           TIMESTAMP,
+    fixed             BOOLEAN   NOT NULL DEFAULT false,
+    fixed_ts          TIMESTAMP,
+    fixed_desc        TEXT
+);
+
+CREATE INDEX errors_index ON errors (hash)
+    WHERE fixed IS false;

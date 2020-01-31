@@ -2,11 +2,14 @@ import { v4 as uuid } from 'uuid';
 
 import db from '../../lib/dataBase';
 import { OutProducer } from '../../lib/kafka';
+import errorsHandler from '../../lib/errorsHandler';
 import logger from '../../lib/logger';
 
 import { fetchContractCommit, fetchContractsQueue } from '../../api';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
+
+import { dateIsValid, formatDate, prepareFieldValue } from '../../utils';
 
 import { IOut, ITreasuryContract, TCommandName, TStatusCode } from '../../types';
 
@@ -31,13 +34,27 @@ export default class Scheduler {
   public async start(): Promise<void> {
     logger.info('✔ Scheduler started');
 
+    await this.commitNotCommittedContracts();
+
+    await this.sendNotSentResponses();
+
     await this.run();
 
     setInterval(() => this.run(), this.interval);
   }
 
-  private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut {
+  private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut | undefined {
     const { id_dok, status, descr, st_date, reg_nom, reg_date } = treasuryContract;
+
+    if (!dateIsValid(st_date)) {
+      errorsHandler.catchError(JSON.stringify(treasuryContract), [
+        {
+          code: 'ER-3.11.2.5',
+          description: 'Получено значение атрибута "st_date", которое не удалось привести к UTC формату'
+        }
+      ]);
+      return;
+    }
 
     const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, ''); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
     const cpid = ocid.replace(/-AC-[0-9]{13}$/, ''); // ocds-b3wdp1-MD-1539843614475
@@ -52,16 +69,41 @@ export default class Scheduler {
           value: status,
           rationale: descr
         },
-        dateMet: st_date
+        dateMet: formatDate(st_date)
       },
       version: '0.0.1'
     };
 
-    if (status === '3005')
+    if (status === '3005') {
+      const externalRegId = prepareFieldValue(reg_nom);
+      const regDate = prepareFieldValue(reg_date);
+
+      if (typeof externalRegId !== 'string' || typeof regDate !== 'string') {
+        const errors = [];
+
+        if (typeof externalRegId !== 'string') {
+          errors.push({
+            code: 'ER-3.11.2.4',
+            description: 'Получено значение атрибута "reg_nom" с типом не строка и не пустой объект'
+          });
+        }
+
+        if (typeof regDate !== 'string') {
+          errors.push({
+            code: 'ER-3.11.2.2',
+            description: 'Получено значение атрибута "reg_date" с типом не строка и не пустой объект'
+          });
+        }
+
+        errorsHandler.catchError(JSON.stringify(treasuryContract), errors);
+        return;
+      }
+
       kafkaMessageOut.data.regData = {
-        externalRegId: reg_nom,
-        regDate: reg_date
+        externalRegId,
+        regDate
       };
+    }
 
     return kafkaMessageOut;
   }
@@ -77,8 +119,6 @@ export default class Scheduler {
         logger.error('🗙 Error in SCHEDULER. treasuryContract.status not equal verifiable statusCode');
         return;
       }
-
-      if (!this.contractIdPattern.test(contractId)) return;
 
       const sentContract = await db.isExist(dbConfig.tables.treasuryRequests, {
         field: 'id_doc',
@@ -109,6 +149,8 @@ export default class Scheduler {
 
       const kafkaMessageOut = this.generateKafkaMessageOut(treasuryContract);
 
+      if (!kafkaMessageOut) return;
+
       await db.insertToResponses({
         id_doc: contractId,
         cmd_id: kafkaMessageOut.id,
@@ -133,19 +175,22 @@ export default class Scheduler {
       async (error: any) => {
         if (error) return logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', error);
 
-        // Update timestamp commit in treasure_in table
-        const result = await db.updateRow({
-          table: dbConfig.tables.responses,
-          contractId,
-          columns: {
-            ts: Date.now()
-          }
-        });
+        try {
+          const result = await db.updateRow({
+            table: dbConfig.tables.responses,
+            contractId,
+            columns: {
+              ts: Date.now()
+            }
+          });
 
-        if (result.rowCount !== 1) {
-          logger.error(
-            `🗙 Error in SCHEDULER. sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`
-          );
+          if (result.rowCount !== 1) {
+            logger.error(
+              `🗙 Error in SCHEDULER. sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`
+            );
+          }
+        } catch (asyncError) {
+          logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', asyncError);
         }
       }
     );
@@ -156,6 +201,8 @@ export default class Scheduler {
       const notSentContractsMessages = await db.getNotSentMessages({
         launch: false
       });
+
+      logger.warn(`! Scheduler has ${notSentContractsMessages.length} not sent message(s)`);
 
       for (const row of notSentContractsMessages) {
         await this.sendResponse(row.id_doc, row.message);
@@ -169,7 +216,9 @@ export default class Scheduler {
     try {
       const res = await fetchContractCommit(contractId);
 
-      if (!res) return;
+      if (!res) {
+        throw new Error('No response was received');
+      }
 
       const result = await db.updateRow({
         table: dbConfig.tables.treasuryResponses,
@@ -180,23 +229,24 @@ export default class Scheduler {
       });
 
       if (result.rowCount !== 1) {
-        logger.error(
-          `🗙 Error in SCHEDULER. commitContract: Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`
+        throw new Error(
+          `Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`
         );
-        return;
       }
 
       logger.info(`✔ Contract with id - ${contractId} was removed from queue with statusCode - ${statusCode}`);
 
       return true;
     } catch (error) {
-      logger.error('🗙 Error in SCHEDULER. commitContract: ', error);
+      logger.error('🗙 Error in SCHEDULER. commitContract: ', error.message);
     }
   }
 
   private async commitNotCommittedContracts(): Promise<void> {
     try {
       const notCommittedContracts = await db.getNotCommitteds();
+
+      logger.warn(`! Scheduler has ${notCommittedContracts.length} not committed contract(s)`);
 
       for (const contract of notCommittedContracts) {
         await this.commitContract(contract.id_doc, contract.status_code);
@@ -208,22 +258,26 @@ export default class Scheduler {
 
   private async run(): Promise<void> {
     try {
-      await this.commitNotCommittedContracts();
-
-      await this.sendNotSentResponses();
-
       for (const statusCode of Object.keys(this.statusCodesMapToCommandName) as TStatusCode[]) {
         const contractsQueue = await fetchContractsQueue(statusCode);
 
-        if (!contractsQueue) continue;
-        if (!contractsQueue.contract) continue;
+        if (!contractsQueue || !Array.isArray(contractsQueue.contract)) {
+          await errorsHandler.catchError(JSON.stringify(contractsQueue), [
+            {
+              code: 'ER-3.11.2.6',
+              description:
+                'После отправки запроса на получение очереди контрактов, получен ответ не в формате: объект, внутри которого массив contract ({ "contract": [] } )'
+            }
+          ]);
+          continue;
+        }
 
-        if (Array.isArray(contractsQueue.contract)) {
-          for (const treasuryContract of contractsQueue.contract) {
-            await this.doContractProcessing(statusCode, treasuryContract);
-          }
-        } else {
-          await this.doContractProcessing(statusCode, contractsQueue.contract);
+        const contractFrom2Cdb = contractsQueue.contract.filter(contract => {
+          return this.contractIdPattern.test(contract.id_dok);
+        });
+
+        for (const treasuryContract of contractFrom2Cdb) {
+          await this.doContractProcessing(statusCode, treasuryContract);
         }
       }
 

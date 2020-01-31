@@ -4,6 +4,9 @@ import { AxiosRequestConfig } from 'axios';
 import { IContractRegisterPayload, TStatusCode } from './types';
 
 export const serviceConfig = {
+  id: process.env.SERVICE_ID || '83',
+  name: process.env.SERVICE_NAME || 'mconnect-bus-nodejs',
+  version: process.env.SERVICE_VERSION || '1.0.0',
   port: +(process.env.SERVICE_PORT || 5000)
 };
 
@@ -26,7 +29,8 @@ export const kafkaInConsumerConfig = {
 };
 
 export const kafkaOutProducerConfig = {
-  outTopic: process.env.OUT_TOPIC || ''
+  outTopic: process.env.OUT_TOPIC || '',
+  incidentsTopic: process.env.INCIDENTS_TOPIC || ''
 };
 
 export const dbConfig = {
@@ -39,7 +43,8 @@ export const dbConfig = {
     requests: process.env.DB_TABLE_REQUESTS || '',
     responses: process.env.DB_TABLE_RESPONSES || '',
     treasuryRequests: process.env.DB_TABLE_TREASURY_REQUESTS || '',
-    treasuryResponses: process.env.DB_TABLE_TREASURY_RESPONSES || ''
+    treasuryResponses: process.env.DB_TABLE_TREASURY_RESPONSES || '',
+    errors: process.env.DB_TABLE_ERRORS || ''
   }
 };
 

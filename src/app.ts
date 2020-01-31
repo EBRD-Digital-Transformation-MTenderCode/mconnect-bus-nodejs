@@ -1,12 +1,13 @@
-import { registrationSchedulerInterval, queueSchedulerInterval } from './configs';
+import { serviceConfig, registrationSchedulerInterval, queueSchedulerInterval } from './configs';
 
 import Server from './modules/server';
 import Scheduler from './modules/scheduler';
 import Registrator from './modules/registrator';
 
+import errorsHandler from './lib/errorsHandler';
 import logger from './lib/logger';
 
-logger.info('✔ mConnect Bus App is running');
+logger.info(`✔ ${serviceConfig.name} v${serviceConfig.version} is running`);
 
 const server = new Server();
 
@@ -19,3 +20,5 @@ registrator.start();
 const scheduler = new Scheduler(1000 * 60 * queueSchedulerInterval);
 
 scheduler.start();
+
+errorsHandler.checkNotSentErrors();
