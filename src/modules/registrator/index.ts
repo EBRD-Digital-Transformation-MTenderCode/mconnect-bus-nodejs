@@ -7,6 +7,7 @@ import { fetchContractRegister, fetchEntityRecord } from '../../api';
 import db from '../../lib/dataBase';
 import { InConsumer, OutProducer } from '../../lib/kafka';
 import logger from '../../lib/logger';
+import errorsHandler from '../../lib/errorsHandler';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
@@ -65,7 +66,7 @@ export default class Registrator {
           return;
         }
 
-        logger.info(`Contract ${contractId} was successfully registered`);
+        logger.info(`✔ Contract ${contractId} was successfully registered`);
 
         await Registrator.sendKafkaMessageOut(contract, kafkaMessageOut);
       }
@@ -188,8 +189,6 @@ export default class Registrator {
   }
 
   private static async saveContractForRegistration(data: IMessage): Promise<void> {
-    logger.warn(JSON.stringify(data.value));
-
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
@@ -250,9 +249,23 @@ export default class Registrator {
     try {
       const { cpid, ocid } = messageData.data;
 
-      const acRecord: IAcRecord | undefined = await fetchEntityRecord(cpid, ocid);
+      let acRecord: IAcRecord | undefined;
 
-      if (!acRecord) return;
+      try {
+        acRecord = await fetchEntityRecord(cpid, ocid);
+
+        if (!acRecord || !Object.keys(acRecord).length) {
+          throw new Error();
+        }
+      } catch (errorFetchAcRecord) {
+        await errorsHandler.catchError(JSON.stringify(messageData), [
+          {
+            code: 'ER-3.11.2.7',
+            description: 'Не удалось получить рекорд контракта'
+          }
+        ]);
+        return;
+      }
 
       const [acRelease] = acRecord.releases;
 
@@ -264,9 +277,23 @@ export default class Registrator {
         }) || ({} as IRelatedProcess)
       ).identifier;
 
-      const tenderRecord = await fetchEntityRecord(cpid, ocid);
+      let tenderRecord;
 
-      if (!tenderRecord) return;
+      try {
+        tenderRecord = await fetchEntityRecord(cpid, ocid);
+
+        if (!tenderRecord || !Object.keys(tenderRecord).length) {
+          throw new Error();
+        }
+      } catch (errorFetchTenderRecord) {
+        await errorsHandler.catchError(JSON.stringify(messageData), [
+          {
+            code: 'ER-3.11.2.8',
+            description: 'Не удалось получить рекорд контракта'
+          }
+        ]);
+        return;
+      }
 
       const [contract] = contracts;
 
@@ -371,7 +398,12 @@ export default class Registrator {
 
       return contractRegisterPayload;
     } catch (error) {
-      logger.error('🗙 Error in registrator generateRegistrationPayload: ', error);
+      await errorsHandler.catchError(JSON.stringify(messageData), [
+        {
+          code: 'ER-3.11.2.9',
+          description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.stack}`
+        }
+      ]);
     }
   }
 

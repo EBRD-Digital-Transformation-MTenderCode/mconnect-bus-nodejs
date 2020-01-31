@@ -505,9 +505,6 @@ describe('[Unit] Registrator', () => {
 
             it('Should log error', () => {
               expect(logger.error).toHaveBeenCalled();
-              expect(logger.error).toHaveBeenCalledWith(
-                `🗙 Error in REGISTRATOR. Failed to generate contract register payload for - ${message.value.data.ocid}`
-              );
             });
 
             it('Should terminate generation', async () => {
