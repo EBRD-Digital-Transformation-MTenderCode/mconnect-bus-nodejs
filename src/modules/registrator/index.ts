@@ -34,6 +34,8 @@ export default class Registrator {
     try {
       const notRegisteredContracts = await db.getNotRegistereds();
 
+      logger.warn(`! Registrator has ${notRegisteredContracts.length} not registered contract(s)`);
+
       for (const contract of notRegisteredContracts) {
         const contractId = contract.id_doc;
 
@@ -59,6 +61,8 @@ export default class Registrator {
             logger.error(error.message);
             return;
           }
+        } else {
+          return;
         }
 
         logger.info(`Contract ${contractId} was successfully registered`);
@@ -71,8 +75,8 @@ export default class Registrator {
   }
 
   private static generateKafkaMessageOut(contractId: string): IOut {
-    const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, '');
-    const cpid = ocid.replace(/-AC-[0-9]{13}$/, '');
+    const ocid = contractId.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, ''); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
+    const cpid = ocid.replace(/-AC-[0-9]{13}$/, ''); // ocds-b3wdp1-MD-1539843614475
 
     return {
       id: uuid(),
@@ -141,17 +145,23 @@ export default class Registrator {
   ): Promise<void> {
     const { id_doc: contractId } = contract;
 
-    const result = await db.updateRow({
-      table: dbConfig.tables[table],
-      contractId,
-      columns: {
-        ts: Date.now()
-      }
-    });
+    try {
+      const result = await db.updateRow({
+        table: dbConfig.tables[table],
+        contractId,
+        columns: {
+          ts: Date.now()
+        }
+      });
 
-    if (result.rowCount !== 1) {
+      if (result.rowCount !== 1) {
+        throw new Error(
+          `🗙 Error in REGISTRATOR. ${processType}: Failed to update timestamp in treasuryRequests table for id_doc ${contractId}. Column timestamp seems to be already filled.`
+        );
+      }
+    } catch (e) {
       throw new Error(
-        `🗙 Error in REGISTRATOR. ${processType}: Failed to update timestamp in treasuryRequests table for id_doc ${contractId}. Column timestamp seems to be already filled.`
+        `🗙 Error in REGISTRATOR. ${processType}: Failed to update timestamp in treasuryRequests table for id_doc ${contractId}.`
       );
     }
   }
@@ -178,20 +188,44 @@ export default class Registrator {
   }
 
   private static async saveContractForRegistration(data: IMessage): Promise<void> {
+    logger.warn(JSON.stringify(data.value));
+
     try {
       const messageData: IIn = JSON.parse(data.value as string);
 
       if (messageData.command !== 'sendAcForVerification') return;
 
-      const { exists: contractIsExist } = await db.isExist(dbConfig.tables.requests, {
+      const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
+
+      const { exists: contractIsExistInRequestTable } = await db.isExist(dbConfig.tables.requests, {
         field: 'cmd_id',
         value: messageData.id
       });
 
-      if (contractIsExist) {
+      if (!contractIsExistInRequestTable) {
+        await db.insertToRequests({
+          cmd_id: messageData.id,
+          cmd_name: messageData.command,
+          message: messageData,
+          ts: Date.now()
+        });
+      } else {
         logger.warn(
           `! Warning in REGISTRATOR. Contract ${messageData.data.ocid} being saved for registration already exists in request table.`
         );
+
+        const { exists: contractIsInTreasuryRequestTable } = await db.isExist(dbConfig.tables.treasuryRequests, {
+          field: 'id_doc',
+          value: contractId
+        });
+
+        if (contractIsInTreasuryRequestTable) {
+          logger.warn(
+            `! Warning in REGISTRATOR. Contract ${contractId} being saved for registration already exists in treasury_request table.`
+          );
+
+          return;
+        }
       }
 
       const payload = await Registrator.generateRegistrationPayload(messageData);
@@ -202,15 +236,6 @@ export default class Registrator {
         );
         return;
       }
-
-      await db.insertToRequests({
-        cmd_id: messageData.id,
-        cmd_name: messageData.command,
-        message: messageData,
-        ts: Date.now()
-      });
-
-      const contractId = `${messageData.data.ocid}-${messageData.context.startDate}`;
 
       await db.insertToTreasuryRequests({
         id_doc: contractId,

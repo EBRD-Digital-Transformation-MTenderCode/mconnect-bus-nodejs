@@ -177,7 +177,7 @@ describe('[Unit] Registrator', () => {
                 await sut.start();
 
                 expect(logger.error).toHaveBeenCalledWith(
-                  `🗙 Error in REGISTRATOR. Contract exists: Failed to update timestamp in treasuryRequests table for id_doc ${contract.id_doc}. Column timestamp seems to be already filled.`
+                  `🗙 Error in REGISTRATOR. Contract exists: Failed to update timestamp in treasuryRequests table for id_doc ${contract.id_doc}.`
                 );
               });
             });
@@ -212,7 +212,7 @@ describe('[Unit] Registrator', () => {
 
                 // TODO: throw errors on each failed validation step
                 expect(logger.error).toHaveBeenCalledWith(
-                  `🗙 Error in REGISTRATOR. Contract does not exist: Failed to update timestamp in treasuryRequests table for id_doc ${contract.id_doc}. Column timestamp seems to be already filled.`
+                  `🗙 Error in REGISTRATOR. Contract does not exist: Failed to update timestamp in treasuryRequests table for id_doc ${contract.id_doc}.`
                 );
               });
             });
@@ -486,6 +486,8 @@ describe('[Unit] Registrator', () => {
           await sut.start();
           callback = (InConsumer.on as jest.Mock).mock.calls[0][1];
           value = JSON.stringify(message.value);
+
+          (db.isExist as jest.Mock).mockResolvedValue({ exists: false });
 
           await callback({ topic: message.topic, value });
         });
