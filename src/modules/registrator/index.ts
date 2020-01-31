@@ -97,14 +97,14 @@ export default class Registrator {
       const contractRegistrationResponse = await fetchContractRegister(message);
 
       if (!contractRegistrationResponse) {
-        throw new Error(`response from treasury was not received.`);
+        throw Error(`response from treasury was not received.`);
       }
 
       if (contractRegistrationResponse && contractRegistrationResponse.id_dok !== contractId) {
-        throw new Error(`response id does not match contract id.`);
+        throw Error(`response id does not match contract id.`);
       }
     } catch (error) {
-      throw new Error(`🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - ${error.message}`);
+      throw Error(`🗙 Error in REGISTRATOR. Failed to register contract ${contractId} - ${error.message}`);
     }
   }
 
@@ -156,12 +156,12 @@ export default class Registrator {
       });
 
       if (result.rowCount !== 1) {
-        throw new Error(
+        throw Error(
           `🗙 Error in REGISTRATOR. ${processType}: Failed to update timestamp in treasuryRequests table for id_doc ${contractId}. Column timestamp seems to be already filled.`
         );
       }
     } catch (e) {
-      throw new Error(
+      throw Error(
         `🗙 Error in REGISTRATOR. ${processType}: Failed to update timestamp in treasuryRequests table for id_doc ${contractId}.`
       );
     }
@@ -255,7 +255,7 @@ export default class Registrator {
         acRecord = await fetchEntityRecord(cpid, ocid);
 
         if (!acRecord || !Object.keys(acRecord).length) {
-          throw new Error();
+          throw Error();
         }
       } catch (errorFetchAcRecord) {
         await errorsHandler.catchError(JSON.stringify(messageData), [
@@ -283,7 +283,7 @@ export default class Registrator {
         tenderRecord = await fetchEntityRecord(cpid, ocid);
 
         if (!tenderRecord || !Object.keys(tenderRecord).length) {
-          throw new Error();
+          throw Error();
         }
       } catch (errorFetchTenderRecord) {
         await errorsHandler.catchError(JSON.stringify(messageData), [

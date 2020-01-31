@@ -217,7 +217,7 @@ export default class Scheduler {
       const res = await fetchContractCommit(contractId);
 
       if (!res) {
-        throw new Error('No response was received');
+        throw Error('No response was received');
       }
 
       const result = await db.updateRow({
@@ -229,7 +229,7 @@ export default class Scheduler {
       });
 
       if (result.rowCount !== 1) {
-        throw new Error(
+        throw Error(
           `Can't update timestamp in treasuryResponses table for id_doc ${contractId}. Seem to be column timestamp already filled`
         );
       }
