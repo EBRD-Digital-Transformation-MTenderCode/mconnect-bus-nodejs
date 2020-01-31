@@ -261,16 +261,17 @@ export default class Scheduler {
       for (const statusCode of Object.keys(this.statusCodesMapToCommandName) as TStatusCode[]) {
         const contractsQueue = await fetchContractsQueue(statusCode);
 
-        if (!contractsQueue || !Array.isArray(contractsQueue.contract)) {
+        if (!contractsQueue || typeof contractsQueue !== 'object') {
           await errorsHandler.catchError(JSON.stringify(contractsQueue), [
             {
               code: 'ER-3.11.2.6',
-              description:
-                'После отправки запроса на получение очереди контрактов, получен ответ не в формате: объект, внутри которого массив contract ({ "contract": [] } )'
+              description: `После отправки запроса на получение очереди контрактов (${statusCode}), получен ответ не в формате: объект, внутри которого массив contract ({ "contract": [] } )`
             }
           ]);
           continue;
         }
+
+        if (!Array.isArray(contractsQueue.contract)) continue;
 
         const contractFrom2Cdb = contractsQueue.contract.filter(contract => {
           return this.contractIdPattern.test(contract.id_dok);

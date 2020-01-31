@@ -40,7 +40,8 @@ class ErrorsHandler {
 
       if (existError) {
         logger.error(`🗙 Error in ERROR_HANDLER. catchError: Next data already processed:
-          ${entityString}`);
+          ${entityString}. 
+          Errors: ${JSON.stringify(errors, null, 2)}`);
         return;
       }
 
