@@ -163,19 +163,13 @@ export default class Scheduler {
         message: kafkaMessageOut
       });
 
-      const messageToKafkaIsSent = await this.sendResponse(contractId, kafkaMessageOut);
-
-      if (messageToKafkaIsSent) {
-        await this.commitContract(contractId, status);
-      }
+      await this.sendResponse(contractId, kafkaMessageOut);
     } catch (error) {
       logger.error('🗙 Error in SCHEDULER. doContractProcessing: ', error);
     }
   }
 
-  private async sendResponse(contractId: string, kafkaMessageOut: IOut): Promise<boolean> {
-    let sent = false;
-
+  private async sendResponse(contractId: string, kafkaMessageOut: IOut): Promise<void> {
     await OutProducer.send(
       [
         {
@@ -202,14 +196,12 @@ export default class Scheduler {
             return;
           }
 
-          sent = true;
+          await this.commitContract(contractId, kafkaMessageOut.data.verification?.value as TStatusCode);
         } catch (asyncError) {
           logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', asyncError);
         }
       }
     );
-
-    return sent;
   }
 
   private async sendNotSentResponses(): Promise<void> {
@@ -228,7 +220,7 @@ export default class Scheduler {
     }
   }
 
-  private async commitContract(contractId: string, statusCode: string): Promise<boolean | undefined> {
+  private async commitContract(contractId: string, statusCode: TStatusCode): Promise<boolean | undefined> {
     try {
       const res = await fetchContractCommit(contractId);
 

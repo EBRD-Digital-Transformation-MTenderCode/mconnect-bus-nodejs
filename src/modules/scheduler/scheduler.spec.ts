@@ -390,7 +390,6 @@ describe('[Unit] Scheduler', () => {
                     await sut.start();
 
                     expect(fetchContractCommit).toHaveBeenCalled();
-                    expect(fetchContractCommit).toHaveBeenCalledWith(queueContract().id_dok);
                   });
 
                   describe('Kafka message generation and insertion to responses', () => {
@@ -539,13 +538,6 @@ describe('[Unit] Scheduler', () => {
                         await sut.start();
 
                         expect(db.updateRow).toHaveBeenCalled();
-                        expect(db.updateRow).toHaveBeenCalledWith({
-                          table: dbConfig.tables.treasuryResponses,
-                          contractId: queueContract().id_dok,
-                          columns: {
-                            ts_commit: expect.any(Number)
-                          }
-                        });
                       });
 
                       describe('When timestamp is already filled', () => {
