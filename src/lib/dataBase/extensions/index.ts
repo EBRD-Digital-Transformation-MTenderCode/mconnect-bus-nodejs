@@ -7,6 +7,9 @@ import insertToErrors, { TInsertToErrors } from './errorsTable/insertToErrors';
 import setTsSend, { TSetTsSend } from './errorsTable/setTsSend';
 import getNotSentErrors, { TGetNotSentErrors } from './errorsTable/getNotSentErrors';
 import insertToResponses, { TInsertToResponses } from './responsesTable/insertToResponses';
+import deleteFromTreasureResponses, {
+  TDeleteFromTreasureResponses
+} from './treasuryResponsesTable/deleteFromTreasureResponeses';
 import getNotCommitteds, { TGetNotCommitteds } from './treasuryResponsesTable/getNotCommitteds';
 import getNotRegistereds, { TGetNotRegistereds } from './treasuryRequestsTable/getNotRegistereds';
 import getNotSentMessages, { TGtNotSentMessages } from './responsesTable/getNotSentMessages';
@@ -21,6 +24,7 @@ export interface IExtensions {
   insertToResponses: TInsertToResponses;
   insertToErrors: TInsertToErrors;
   getNotSentErrors: TGetNotSentErrors;
+  deleteFromTreasureResponses: TDeleteFromTreasureResponses;
   setTsSend: TSetTsSend;
   getNotCommitteds: TGetNotCommitteds;
   getNotRegistereds: TGetNotRegistereds;
@@ -37,6 +41,7 @@ export const extentions = {
   insertToResponses,
   insertToErrors,
   getNotSentErrors,
+  deleteFromTreasureResponses,
   setTsSend,
   getNotCommitteds,
   getNotRegistereds,

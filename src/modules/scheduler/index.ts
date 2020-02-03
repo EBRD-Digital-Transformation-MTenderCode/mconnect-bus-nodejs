@@ -134,6 +134,15 @@ export default class Scheduler {
         return;
       }
 
+      const receivedContract = await db.isExist(dbConfig.tables.treasuryResponses, {
+        field: 'id_doc',
+        value: contractId
+      });
+
+      if (receivedContract.exists) {
+        await db.deleteFromTreasureResponses(contractId);
+      }
+
       const { status } = treasuryContract;
 
       await db.insertToTreasureResponses({
