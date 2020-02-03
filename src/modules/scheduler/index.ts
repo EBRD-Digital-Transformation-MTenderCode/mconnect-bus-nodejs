@@ -152,10 +152,6 @@ export default class Scheduler {
         ts_in: Date.now()
       });
 
-      const contractIsCommitted = await this.commitContract(contractId, status);
-
-      if (!contractIsCommitted) return;
-
       const kafkaMessageOut = this.generateKafkaMessageOut(treasuryContract);
 
       if (!kafkaMessageOut) return;
@@ -167,14 +163,20 @@ export default class Scheduler {
         message: kafkaMessageOut
       });
 
-      await this.sendResponse(contractId, kafkaMessageOut);
+      const messageToKafkaIsSent = await this.sendResponse(contractId, kafkaMessageOut);
+
+      if (messageToKafkaIsSent) {
+        await this.commitContract(contractId, status);
+      }
     } catch (error) {
       logger.error('🗙 Error in SCHEDULER. doContractProcessing: ', error);
     }
   }
 
-  private async sendResponse(contractId: string, kafkaMessageOut: IOut): Promise<void> {
-    OutProducer.send(
+  private async sendResponse(contractId: string, kafkaMessageOut: IOut): Promise<boolean> {
+    let sent = false;
+
+    await OutProducer.send(
       [
         {
           topic: kafkaOutProducerConfig.outTopic,
@@ -197,12 +199,17 @@ export default class Scheduler {
             logger.error(
               `🗙 Error in SCHEDULER. sendResponse - producer: Can't update timestamp in responses table for id_doc ${contractId}. Seem to be column timestamp already filled`
             );
+            return;
           }
+
+          sent = true;
         } catch (asyncError) {
           logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', asyncError);
         }
       }
     );
+
+    return sent;
   }
 
   private async sendNotSentResponses(): Promise<void> {
