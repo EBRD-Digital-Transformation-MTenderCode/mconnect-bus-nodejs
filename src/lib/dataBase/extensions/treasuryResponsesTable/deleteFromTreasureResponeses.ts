@@ -9,7 +9,7 @@ const deleteFromTreasureResponses: TDeleteFromTreasureResponses = id_doc => {
 
   const query = `
     DELETE FROM ${treasuryResponsesTable}
-    WHERE id_doc='${id_doc}' AND ts_commit=NULL
+    WHERE id_doc='${id_doc}' AND ts_commit IS NULL
   `;
 
   return db.none(query);
