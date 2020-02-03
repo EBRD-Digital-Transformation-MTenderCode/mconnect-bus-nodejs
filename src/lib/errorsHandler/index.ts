@@ -38,7 +38,7 @@ class ErrorsHandler {
     try {
       const existError = await db.isExist(dbConfig.tables.errors, { field: 'hash', value: entityHash });
 
-      if (existError) {
+      if (existError.exists) {
         logger.error(`🗙 Error in ERROR_HANDLER. catchError: Next data already processed:
           ${entityString}. 
           Errors: ${JSON.stringify(errors, null, 2)}`);

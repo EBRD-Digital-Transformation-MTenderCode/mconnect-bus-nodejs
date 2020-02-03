@@ -165,7 +165,7 @@ export default class Scheduler {
 
       await this.sendResponse(contractId, kafkaMessageOut);
     } catch (error) {
-      logger.error('🗙 Error in SCHEDULER. doContractProcessing: ', error);
+      logger.error(`🗙 Error in SCHEDULER. doContractProcessing for contract - ${treasuryContract.id_dok}`, error);
     }
   }
 
