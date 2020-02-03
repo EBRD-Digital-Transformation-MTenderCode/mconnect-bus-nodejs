@@ -12,6 +12,7 @@ const pgPromiseInst: IMain = pgPromise({
     obj.insertToTreasureResponses = extentions.insertToTreasureResponses;
     obj.insertToResponses = extentions.insertToResponses;
     obj.insertToErrors = extentions.insertToErrors;
+    obj.deleteFromTreasureResponses = extentions.deleteFromTreasureResponses;
     obj.setTsSend = extentions.setTsSend;
     obj.getNotSentErrors = extentions.getNotSentErrors;
     obj.getNotCommitteds = extentions.getNotCommitteds;
