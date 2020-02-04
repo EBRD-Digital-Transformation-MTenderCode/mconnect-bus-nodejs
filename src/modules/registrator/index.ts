@@ -280,7 +280,7 @@ export default class Registrator {
       let tenderRecord;
 
       try {
-        tenderRecord = await fetchEntityRecord(cpid, ocid);
+        tenderRecord = await fetchEntityRecord(cpid, tenderOcid);
 
         if (!tenderRecord || !Object.keys(tenderRecord).length) {
           throw Error();
