@@ -34,3 +34,17 @@ export const prepareFieldValue = (value: unknown): string | undefined => {
     return value;
   }
 };
+
+const datePattern = '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z';
+const cpidPattern = '^ocds-([a-z]|[0-9]){6}-[A-Z]{2}-[0-9]{13}';
+const ocidTenderPattern = `${cpidPattern}-(EV|NP)-[0-9]{13}`;
+const ocidContractPattern = `${cpidPattern}-AC-[0-9]{13}`;
+const contractIdPattern = `${ocidContractPattern}-${datePattern}$`;
+
+export const patterns = {
+  date: new RegExp(datePattern),
+  cpid: new RegExp(cpidPattern),
+  ocidTender: new RegExp(ocidTenderPattern),
+  ocidContract: new RegExp(ocidContractPattern),
+  contractId: new RegExp(contractIdPattern),
+};

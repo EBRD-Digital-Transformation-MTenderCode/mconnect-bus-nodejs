@@ -1,5 +1,8 @@
 import { v4 as uuid } from 'uuid';
 
+import * as yup from 'yup';
+import { messageOutSchema } from '../../validationsSchemas';
+
 import db from '../../lib/dataBase';
 import { OutProducer } from '../../lib/kafka';
 import errorsHandler from '../../lib/errorsHandler';
@@ -9,7 +12,7 @@ import { fetchContractCommit, fetchContractsQueue } from '../../api';
 
 import { dbConfig, kafkaOutProducerConfig } from '../../configs';
 
-import { dateIsValid, formatDate, prepareFieldValue } from '../../utils';
+import { dateIsValid, formatDate, prepareFieldValue, patterns } from '../../utils';
 
 import { IOut, ITreasuryContract, TCommandName, TStatusCode } from '../../types';
 
@@ -18,16 +21,13 @@ type IStatusCodesMapToCommandName = {
 };
 
 export default class Scheduler {
-  private readonly contractIdPattern: RegExp;
-
   private readonly statusCodesMapToCommandName: IStatusCodesMapToCommandName;
 
   constructor(private readonly interval: number) {
-    this.contractIdPattern = /^ocds-([a-z]|[0-9]){6}-[A-Z]{2}-[0-9]{13}-AC-[0-9]{13}-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/;
     this.statusCodesMapToCommandName = {
       '3004': 'treasuryApprovingAc',
       '3005': 'requestForAcClarification',
-      '3006': 'processAcRejection'
+      '3006': 'processAcRejection',
     };
   }
 
@@ -43,21 +43,22 @@ export default class Scheduler {
     setInterval(() => this.run(), this.interval);
   }
 
-  private generateKafkaMessageOut(treasuryContract: ITreasuryContract): IOut | undefined {
+  private async generateKafkaMessageOut(treasuryContract: ITreasuryContract): Promise<IOut | undefined> {
     const { id_dok, status, descr, st_date, reg_nom, reg_date } = treasuryContract;
 
     if (!dateIsValid(st_date)) {
       errorsHandler.catchError(JSON.stringify(treasuryContract), [
         {
           code: 'ER-3.11.2.5',
-          description: 'Получено значение атрибута "st_date", которое не удалось привести к UTC формату'
-        }
+          description: 'Получено значение атрибута "st_date", которое не удалось привести к UTC формату',
+        },
       ]);
       return;
     }
 
-    const ocid = id_dok.replace(/-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, ''); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
-    const cpid = ocid.replace(/-AC-[0-9]{13}$/, ''); // ocds-b3wdp1-MD-1539843614475
+    // @ts-ignore
+    const [cpid] = id_dok.match(patterns.cpid); // ocds-b3wdp1-MD-1539843614475
+    const [ocid] = id_dok.match(patterns.ocidContract); // ocds-b3wdp1-MD-1539843614475-AC-1539843614531
 
     const kafkaMessageOut: IOut = {
       id: uuid(),
@@ -67,14 +68,14 @@ export default class Scheduler {
         ocid,
         verification: {
           value: status,
-          rationale: descr
+          rationale: descr,
         },
-        dateMet: formatDate(st_date)
+        dateMet: formatDate(st_date),
       },
-      version: '0.0.1'
+      version: '0.0.1',
     };
 
-    if (status === '3005') {
+    if (status === '3004') {
       const externalRegId = prepareFieldValue(reg_nom);
       const regDate = prepareFieldValue(reg_date);
 
@@ -84,14 +85,14 @@ export default class Scheduler {
         if (typeof externalRegId !== 'string') {
           errors.push({
             code: 'ER-3.11.2.4',
-            description: 'Получено значение атрибута "reg_nom" с типом не строка и не пустой объект'
+            description: 'Получено значение атрибута "reg_nom" с типом не строка и не пустой объект',
           });
         }
 
         if (typeof regDate !== 'string') {
           errors.push({
             code: 'ER-3.11.2.2',
-            description: 'Получено значение атрибута "reg_date" с типом не строка и не пустой объект'
+            description: 'Получено значение атрибута "reg_date" с типом не строка и не пустой объект',
           });
         }
 
@@ -101,8 +102,24 @@ export default class Scheduler {
 
       kafkaMessageOut.data.regData = {
         externalRegId,
-        regDate
+        regDate,
       };
+    }
+
+    try {
+      await messageOutSchema.validate(messageOutSchema, {
+        abortEarly: false,
+      });
+    } catch (validationError) {
+      const errors = validationError.inner.map((error: yup.ValidationError) => ({
+        code: 'ER-3.11.2.2',
+        description: `Не получилось найти любой из необходимых атрибутов внутри ответа от Казны: ${error.message}${
+          error.value !== undefined ? `. Value is - ${error.value}` : ''
+        }`,
+      }));
+
+      await errorsHandler.catchError(JSON.stringify(treasuryContract), errors);
+      return;
     }
 
     return kafkaMessageOut;
@@ -122,21 +139,14 @@ export default class Scheduler {
 
       const sentContract = await db.isExist(dbConfig.tables.treasuryRequests, {
         field: 'id_doc',
-        value: contractId
+        value: contractId,
       });
 
       if (!sentContract.exists) return;
 
-      if (treasuryContract.status === '3005' && (!treasuryContract.reg_nom || !treasuryContract.reg_date)) {
-        logger.error(
-          `🗙 Error in SCHEDULER. Contract in queue 3005 with id ${treasuryContract.id_dok} hasn't reg_nom OR reg_date fields`
-        );
-        return;
-      }
-
       const receivedContract = await db.isExist(dbConfig.tables.treasuryResponses, {
         field: 'id_doc',
-        value: contractId
+        value: contractId,
       });
 
       if (receivedContract.exists) {
@@ -149,10 +159,10 @@ export default class Scheduler {
         id_doc: contractId,
         status_code: status,
         message: treasuryContract,
-        ts_in: Date.now()
+        ts_in: Date.now(),
       });
 
-      const kafkaMessageOut = this.generateKafkaMessageOut(treasuryContract);
+      const kafkaMessageOut = await this.generateKafkaMessageOut(treasuryContract);
 
       if (!kafkaMessageOut) return;
 
@@ -160,7 +170,7 @@ export default class Scheduler {
         id_doc: contractId,
         cmd_id: kafkaMessageOut.id,
         cmd_name: kafkaMessageOut.command,
-        message: kafkaMessageOut
+        message: kafkaMessageOut,
       });
 
       await this.sendResponse(contractId, kafkaMessageOut);
@@ -174,8 +184,8 @@ export default class Scheduler {
       [
         {
           topic: kafkaOutProducerConfig.outTopic,
-          messages: JSON.stringify(kafkaMessageOut)
-        }
+          messages: JSON.stringify(kafkaMessageOut),
+        },
       ],
       async (error: any) => {
         if (error) return logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', error);
@@ -185,8 +195,8 @@ export default class Scheduler {
             table: dbConfig.tables.responses,
             contractId,
             columns: {
-              ts: Date.now()
-            }
+              ts: Date.now(),
+            },
           });
 
           if (result.rowCount !== 1) {
@@ -207,7 +217,7 @@ export default class Scheduler {
   private async sendNotSentResponses(): Promise<void> {
     try {
       const notSentContractsMessages = await db.getNotSentMessages({
-        launch: false
+        launch: false,
       });
 
       logger.warn(`! Scheduler has ${notSentContractsMessages.length} not sent message(s)`);
@@ -232,8 +242,8 @@ export default class Scheduler {
         table: dbConfig.tables.treasuryResponses,
         contractId,
         columns: {
-          ts_commit: Date.now()
-        }
+          ts_commit: Date.now(),
+        },
       });
 
       if (result.rowCount !== 1) {
@@ -273,8 +283,8 @@ export default class Scheduler {
           await errorsHandler.catchError(JSON.stringify(contractsQueue), [
             {
               code: 'ER-3.11.2.6',
-              description: `После отправки запроса на получение очереди контрактов (${statusCode}), получен ответ не в формате: объект, внутри которого массив contract ({ "contract": [] } )`
-            }
+              description: `После отправки запроса на получение очереди контрактов (${statusCode}), получен ответ не в формате: объект, внутри которого массив contract ({ "contract": [] } )`,
+            },
           ]);
           continue;
         }
@@ -282,7 +292,7 @@ export default class Scheduler {
         if (!Array.isArray(contractsQueue.contract)) continue;
 
         const contractFrom2Cdb = contractsQueue.contract.filter(contract => {
-          return this.contractIdPattern.test(contract.id_dok);
+          return patterns.contractId.test(contract.id_dok);
         });
 
         for (const treasuryContract of contractFrom2Cdb) {
