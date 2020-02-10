@@ -44,14 +44,14 @@ export const messageOutSchema = yup.object().shape({
       then: yup
         .object()
         .shape({
-          reg_nom: yup
+          externalRegId: yup
             .mixed()
             .test({
               test: value => typeof value === 'string',
               message: 'Field "reg_nom" must be a string',
             })
             .required(),
-          reg_date: yup
+          regDate: yup
             .mixed()
             .test({
               test: value => typeof value === 'string',

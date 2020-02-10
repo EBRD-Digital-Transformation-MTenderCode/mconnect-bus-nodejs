@@ -96,7 +96,7 @@ export default class Scheduler {
           });
         }
 
-        errorsHandler.catchError(JSON.stringify(treasuryContract), errors);
+        await errorsHandler.catchError(JSON.stringify(treasuryContract), errors);
         return;
       }
 
