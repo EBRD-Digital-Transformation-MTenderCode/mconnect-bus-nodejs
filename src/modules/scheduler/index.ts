@@ -107,7 +107,7 @@ export default class Scheduler {
     }
 
     try {
-      await messageOutSchema.validate(messageOutSchema, {
+      await messageOutSchema.validate(kafkaMessageOut, {
         abortEarly: false,
       });
     } catch (validationError) {
