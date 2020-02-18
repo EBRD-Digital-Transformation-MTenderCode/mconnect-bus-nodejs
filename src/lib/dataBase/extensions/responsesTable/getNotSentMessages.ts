@@ -3,14 +3,14 @@ import { dbConfig } from '../../../../configs';
 import { IResponsesRow } from '../../../../types/db';
 import db from '../../index';
 
-export type TGtNotSentMessages = ({ launch }: { launch: boolean }) => Promise<IResponsesRow[] | []>;
+export type TGtNotSentMessages = () => Promise<IResponsesRow[] | []>;
 
-const getNotSentMessages: TGtNotSentMessages = ({ launch }) => {
+const getNotSentMessages: TGtNotSentMessages = () => {
   const responsesTable = dbConfig.tables.responses;
 
   const query = `
     SELECT * FROM ${responsesTable}
-    WHERE ts IS NULL AND cmd_name ${launch ? '=' : '!='} 'launchACVerification'
+    WHERE ts IS NULL
   `;
 
   return db.manyOrNone(query);

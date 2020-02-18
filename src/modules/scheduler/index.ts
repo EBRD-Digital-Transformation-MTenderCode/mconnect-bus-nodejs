@@ -216,9 +216,7 @@ export default class Scheduler {
 
   private async sendNotSentResponses(): Promise<void> {
     try {
-      const notSentContractsMessages = await db.getNotSentMessages({
-        launch: false,
-      });
+      const notSentContractsMessages = await db.getNotSentMessages();
 
       logger.warn(`! Scheduler has ${notSentContractsMessages.length} not sent message(s)`);
 
