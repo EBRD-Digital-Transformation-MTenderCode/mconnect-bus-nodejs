@@ -9,7 +9,8 @@
     "start:dev": "NODE_PATH=./src ts-node src/app.ts",
     "dev": "nodemon",
     "build": "tsc --diagnostics",
-    "lint": "eslint 'src/**/*.ts'",
+    "lint": "eslint 'src/**/*.ts' --fix",
+    "format": "prettier 'src/**/*.ts' --write",
     "test": "jest",
     "test:coverage": "jest --coverage"
   },
