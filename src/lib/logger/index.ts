@@ -6,7 +6,7 @@ import { loggerConfig } from '../../configs';
 const { format, transports } = winston;
 const { combine, timestamp, printf, colorize, align, errors } = format;
 
-const errorFormat = printf(({ messageTimestamp, stack, message }) => {
+const errorFormat = printf(({ timestamp: messageTimestamp, stack, message }) => {
   const errorObject = {
     message: {
       errors: [
@@ -32,7 +32,7 @@ const logger = winston.createLogger({
       format: combine(
         colorize({ all: true }),
         align(),
-        printf(({ level, message, messageTimestamp }) => `${level}: ${messageTimestamp} --> ${message}`)
+        printf(({ level, message, timestamp: messageTimestamp }) => `${level}: ${messageTimestamp} --> ${message}`)
       ),
     }),
     // @ts-ignore
