@@ -17,10 +17,10 @@ jest.mock('lib/dataBase');
 jest.mock('lib/kafka');
 jest.mock('api', () => ({
   fetchContractRegister: jest.fn(),
-  fetchEntityRecord: jest.fn()
+  fetchEntityRecord: jest.fn(),
 }));
 jest.mock('utils', () => ({
-  findOrganizationFromRole: jest.fn()
+  findOrganizationFromRole: jest.fn(),
 }));
 
 describe('[Unit] Registrator', () => {
@@ -70,24 +70,24 @@ describe('[Unit] Registrator', () => {
               achiz_date: 'string',
 
               da_expire: 'string',
-              c_link: 'string'
+              c_link: 'string',
             },
             benef: [
               {
                 id_dok: 'string',
                 bbic: 'string',
-                biban: 'string'
-              }
+                biban: 'string',
+              },
             ],
             details: [
               {
                 id_dok: 'string',
                 suma: 1488,
                 piban: 'string',
-                byear: 228
-              }
-            ]
-          }
+                byear: 228,
+              },
+            ],
+          },
         };
         notRegistereds = [contract];
 
@@ -98,7 +98,7 @@ describe('[Unit] Registrator', () => {
         beforeEach(() => {
           (fetchContractRegister as jest.Mock).mockResolvedValue({
             id_dok: contract.id_doc,
-            num_row: '1'
+            num_row: '1',
           });
         });
 
@@ -126,7 +126,7 @@ describe('[Unit] Registrator', () => {
           it('Should stop contract registration if the treasury sent wrong contractId', async () => {
             (fetchContractRegister as jest.Mock).mockResolvedValue({
               id_dok: 'wrong_id',
-              num_row: '1'
+              num_row: '1',
             });
 
             await sut.start();
@@ -149,7 +149,7 @@ describe('[Unit] Registrator', () => {
 
             expect(db.isExist).toHaveBeenCalledWith(dbConfig.tables.responses, {
               field: 'id_doc',
-              value: contract.id_doc
+              value: contract.id_doc,
             });
           });
 
@@ -166,8 +166,8 @@ describe('[Unit] Registrator', () => {
                   table: dbConfig.tables.treasuryRequests,
                   contractId: contract.id_doc,
                   columns: {
-                    ts: expect.any(Number)
-                  }
+                    ts: expect.any(Number),
+                  },
                 });
               });
 
@@ -200,8 +200,8 @@ describe('[Unit] Registrator', () => {
                   table: dbConfig.tables.treasuryRequests,
                   contractId: contract.id_doc,
                   columns: {
-                    ts: expect.any(Number)
-                  }
+                    ts: expect.any(Number),
+                  },
                 });
               });
 
@@ -230,8 +230,8 @@ describe('[Unit] Registrator', () => {
             [
               {
                 topic: expect.any(String),
-                messages: expect.any(String)
-              }
+                messages: expect.any(String),
+              },
             ],
             expect.any(Function)
           );
@@ -287,14 +287,14 @@ describe('[Unit] Registrator', () => {
                 type: 'advance',
                 value: {
                   amount: 228,
-                  currency: 'EUR'
+                  currency: 'EUR',
                 },
                 executionPeriod: {
-                  durationInDays: 1
+                  durationInDays: 1,
                 },
-                relatedContractMilestone: 'contractMilestone'
-              }
-            ]
+                relatedContractMilestone: 'contractMilestone',
+              },
+            ],
           },
           budget: {
             description: 'budget',
@@ -304,19 +304,19 @@ describe('[Unit] Registrator', () => {
                 amount: 2,
                 period: {
                   startDate: '11241241',
-                  endDate: '2'
+                  endDate: '2',
                 },
-                relatedItem: 'item'
-              }
+                relatedItem: 'item',
+              },
             ],
             budgetSource: [
               {
                 budgetBreakdownID: 'id',
                 amount: 2,
-                currency: 'EUR'
-              }
-            ]
-          }
+                currency: 'EUR',
+              },
+            ],
+          },
         },
         contracts: [
           {
@@ -332,20 +332,20 @@ describe('[Unit] Registrator', () => {
                 id: 'documentId',
                 documentType: 'contractSigned',
                 url: '1',
-                datePublished: '14-08-88'
-              }
+                datePublished: '14-08-88',
+              },
             ],
             period: {
               startDate: '1',
-              endDate: '2'
+              endDate: '2',
             },
             value: {
               amount: 2,
               currency: 'EUR',
               amountNet: 2,
-              valueAddedTaxIncluded: true
-            }
-          }
+              valueAddedTaxIncluded: true,
+            },
+          },
         ],
         parties: [
           {
@@ -354,14 +354,14 @@ describe('[Unit] Registrator', () => {
             identifier: {
               scheme: 'scheme',
               id: 'id',
-              legalName: 'name'
+              legalName: 'name',
             },
             additionalIdentifiers: [
               {
                 scheme: 'MD-BRANCHES',
                 id: 'id',
-                legalName: 'name'
-              }
+                legalName: 'name',
+              },
             ],
             details: {
               bankAccounts: [
@@ -370,16 +370,16 @@ describe('[Unit] Registrator', () => {
                   bankName: 'string',
                   identifier: {
                     scheme: 'string',
-                    id: 'string'
+                    id: 'string',
                   },
                   accountIdentification: {
                     scheme: 'string',
-                    id: 'string'
-                  }
-                }
-              ]
+                    id: 'string',
+                  },
+                },
+              ],
             },
-            roles: ['buyer']
+            roles: ['buyer'],
           },
           {
             id: 'partyId',
@@ -387,14 +387,14 @@ describe('[Unit] Registrator', () => {
             identifier: {
               scheme: 'scheme',
               id: 'id',
-              legalName: 'name'
+              legalName: 'name',
             },
             additionalIdentifiers: [
               {
                 scheme: 'MD-BRANCHES',
                 id: 'id',
-                legalName: 'name'
-              }
+                legalName: 'name',
+              },
             ],
             details: {
               bankAccounts: [
@@ -403,17 +403,17 @@ describe('[Unit] Registrator', () => {
                   bankName: 'string',
                   identifier: {
                     scheme: 'string',
-                    id: 'string'
+                    id: 'string',
                   },
                   accountIdentification: {
                     scheme: 'string',
-                    id: 'string'
-                  }
-                }
-              ]
+                    id: 'string',
+                  },
+                },
+              ],
             },
-            roles: ['supplier']
-          }
+            roles: ['supplier'],
+          },
         ],
         relatedProcesses: [
           {
@@ -421,9 +421,9 @@ describe('[Unit] Registrator', () => {
             scheme: 'scheme',
             identifier: 'tender-ocid',
             uri: 'uri',
-            relationship: ['x_evaluation']
-          }
-        ]
+            relationship: ['x_evaluation'],
+          },
+        ],
       };
       const { parties } = acRelease;
 
@@ -440,22 +440,22 @@ describe('[Unit] Registrator', () => {
                 {
                   budgetBreakdownID: 'bbid',
                   budgetIBAN: 'string',
-                  amount: 1
-                }
-              ]
+                  amount: 1,
+                },
+              ],
             },
             context: {
               country: 'string',
-              startDate: 'string'
-            }
-          }
+              startDate: 'string',
+            },
+          },
         };
       });
 
       describe('Check contract existance in database', () => {
         beforeEach(async () => {
           (db.isExist as jest.Mock).mockImplementation(async () => ({
-            exists: true
+            exists: true,
           }));
 
           await sut.start();
@@ -469,7 +469,7 @@ describe('[Unit] Registrator', () => {
           expect(db.isExist).toHaveBeenCalled();
           expect(db.isExist).toHaveBeenCalledWith(dbConfig.tables.requests, {
             field: 'cmd_id',
-            value: message.value.id
+            value: message.value.id,
           });
         });
 
@@ -516,7 +516,7 @@ describe('[Unit] Registrator', () => {
             beforeEach(() => {
               (fetchEntityRecord as jest.Mock).mockResolvedValue({
                 releases: [acRelease],
-                publishedDate: '12412412'
+                publishedDate: '12412412',
               });
             });
 
@@ -544,14 +544,14 @@ describe('[Unit] Registrator', () => {
         beforeEach(async () => {
           (fetchEntityRecord as jest.Mock).mockResolvedValue({
             releases: [acRelease],
-            publishedDate: '12412412'
+            publishedDate: '12412412',
           });
 
           (findOrganizationFromRole as jest.Mock).mockReturnValue({
             identifier: {
               id: 'id',
-              legalName: 'legalName'
-            }
+              legalName: 'legalName',
+            },
           });
 
           await sut.start();
@@ -567,7 +567,7 @@ describe('[Unit] Registrator', () => {
             cmd_id: message.value.id,
             cmd_name: message.value.command,
             message: message.value,
-            ts: expect.any(Number)
+            ts: expect.any(Number),
           });
         });
 
@@ -577,7 +577,7 @@ describe('[Unit] Registrator', () => {
           expect(db.insertToTreasuryRequests).toHaveBeenCalled();
           expect(db.insertToTreasuryRequests).toHaveBeenCalledWith({
             id_doc: expect.any(String),
-            message: expect.any(Object)
+            message: expect.any(Object),
           });
         });
       });
@@ -597,15 +597,15 @@ describe('[Unit] Registrator', () => {
                 {
                   budgetBreakdownID: 'bbid',
                   budgetIBAN: 'string',
-                  amount: 1
-                }
-              ]
+                  amount: 1,
+                },
+              ],
             },
             context: {
               country: 'string',
-              startDate: 'string'
-            }
-          }
+              startDate: 'string',
+            },
+          },
         };
 
         await sut.start();

@@ -1,14 +1,14 @@
 import insertToRequests, { TInsertToRequests } from './requestsTable/insertToRequests';
 import insertToTreasuryRequests, { TInsertToTreasuryRequests } from './treasuryRequestsTable/insertToTreasuryRequests';
 import insertToTreasureResponses, {
-  TInsertToTreasureResponses
+  TInsertToTreasureResponses,
 } from './treasuryResponsesTable/insertToTreasureResponses';
 import insertToErrors, { TInsertToErrors } from './errorsTable/insertToErrors';
 import setTsSend, { TSetTsSend } from './errorsTable/setTsSend';
 import getNotSentErrors, { TGetNotSentErrors } from './errorsTable/getNotSentErrors';
 import insertToResponses, { TInsertToResponses } from './responsesTable/insertToResponses';
 import deleteFromTreasureResponses, {
-  TDeleteFromTreasureResponses
+  TDeleteFromTreasureResponses,
 } from './treasuryResponsesTable/deleteFromTreasureResponeses';
 import getNotCommitteds, { TGetNotCommitteds } from './treasuryResponsesTable/getNotCommitteds';
 import getNotRegistereds, { TGetNotRegistereds } from './treasuryRequestsTable/getNotRegistereds';
@@ -48,5 +48,5 @@ export const extentions = {
   getNotSentMessages,
   updateRow,
   isExist,
-  getRow
+  getRow,
 };

@@ -21,7 +21,7 @@ const pgPromiseInst: IMain = pgPromise({
     obj.updateRow = extentions.updateRow;
     obj.isExist = extentions.isExist;
     obj.getRow = extentions.getRow;
-  }
+  },
 });
 
 const { host, port, database, user, password } = dbConfig;
@@ -31,7 +31,7 @@ const db = pgPromiseInst({
   port,
   database,
   user,
-  password
+  password,
 }) as IDatabase<IExtensions> & IExtensions;
 
 db.connect()

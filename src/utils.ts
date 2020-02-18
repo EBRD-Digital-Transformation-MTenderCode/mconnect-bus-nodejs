@@ -11,7 +11,7 @@ export const tsToPgTs = (ts: number): string => {
   return `${tsStr.substr(0, 10)}.${tsStr.substr(-3)}`;
 };
 
-export const findOrganizationFromRole = (parties: IParty[], role: TRole) => {
+export const findOrganizationFromRole = (parties: IParty[], role: TRole): IParty | undefined => {
   return parties.find(part => {
     return part.roles.some(organizationRole => organizationRole === role);
   });
@@ -26,7 +26,7 @@ export const formatDate = (localDate: string | Date): string => {
 };
 
 export const prepareFieldValue = (value: unknown): string | undefined => {
-  if (value !== null && typeof value === 'object' && !Object.keys(value as Record<string, any>).length) {
+  if (value !== null && typeof value === 'object' && !Object.keys(value as Record<string, unknown>).length) {
     return '';
   }
 

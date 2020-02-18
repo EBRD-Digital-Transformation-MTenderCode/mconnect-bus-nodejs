@@ -178,7 +178,7 @@ export default class Registrator {
           messages: JSON.stringify(kafkaMessage),
         },
       ],
-      async (producerError: any) => {
+      async (producerError: string) => {
         if (producerError)
           return logger.error('🗙 Error in REGISTRATOR. Failed to send message out to Kafka: ', producerError);
 

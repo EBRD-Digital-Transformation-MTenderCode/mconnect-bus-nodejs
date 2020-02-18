@@ -187,7 +187,7 @@ export default class Scheduler {
           messages: JSON.stringify(kafkaMessageOut),
         },
       ],
-      async (error: any) => {
+      async (error: string) => {
         if (error) return logger.error('🗙 Error in SCHEDULER. sendResponse - producer: ', error);
 
         try {

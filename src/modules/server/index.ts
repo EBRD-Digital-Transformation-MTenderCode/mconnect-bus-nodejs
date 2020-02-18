@@ -5,7 +5,7 @@ import { serviceConfig } from '../../configs';
 import logger from '../../lib/logger';
 
 export default class Server {
-  start() {
+  start(): void {
     const { port } = serviceConfig;
 
     http
@@ -14,11 +14,11 @@ export default class Server {
 
         if (url === '/actuator/health') {
           const healthCheckInfo = {
-            status: 'UP'
+            status: 'UP',
           };
 
           res.writeHead(200, {
-            'Content-Type': 'application/vnd.spring-boot.actuator.v2+json;charset=UTF-8'
+            'Content-Type': 'text/json',
           });
           res.end(JSON.stringify(healthCheckInfo));
         } else {
@@ -27,7 +27,7 @@ export default class Server {
             status: 404,
             error: 'Not Found',
             message: 'No message available',
-            path: url
+            path: url,
           };
 
           logger.error(`${errorMessage.status} ${errorMessage.error}. Path - "${errorMessage.path}". `, errorMessage);

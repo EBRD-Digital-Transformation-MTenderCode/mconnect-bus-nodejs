@@ -20,7 +20,7 @@ describe('[Integration] Kafka', () => {
     });
   };
 
-  const sendMessage = (topic: string, cb: (error: any, data: any) => any = () => {}): void => {
+  const sendMessage = (topic: string, cb: (error: any, data: any) => any = (): void => undefined): void => {
     Producer.send([{ topic, messages: 'test' }], cb);
   };
 
@@ -29,7 +29,7 @@ describe('[Integration] Kafka', () => {
 
   enum Topic {
     Out = 'mconnect-bus-out',
-    In = 'mconnect-bus-in'
+    In = 'mconnect-bus-in',
   }
 
   it('Should connect', async () => {
@@ -78,7 +78,7 @@ describe('[Integration] Kafka', () => {
 
   describe('Message reading', () => {
     it(`Should read messages from ${Topic.In}`, () => {
-      sendMessage(kafkaInConsumerConfig.inTopic, (error, data) => {
+      sendMessage(kafkaInConsumerConfig.inTopic, () => {
         Consumer.on('message', message => {
           expect(message).not.toBeUndefined();
         });

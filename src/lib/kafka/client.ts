@@ -7,7 +7,7 @@ import logger from '../logger';
 export const Client = new Kafka.KafkaClient({
   kafkaHost: kafkaClientConfig.kafkaHost,
   connectTimeout: kafkaClientConfig.connectTimeout,
-  requestTimeout: kafkaClientConfig.requestTimeout
+  requestTimeout: kafkaClientConfig.requestTimeout,
 });
 
 Client.on('ready', () => logger.info('✔ Kafka Client ready'));

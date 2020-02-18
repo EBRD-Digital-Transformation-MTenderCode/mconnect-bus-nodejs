@@ -21,9 +21,9 @@ class ErrorsHandler {
       service: {
         id: serviceConfig.id,
         name: serviceConfig.name,
-        version: serviceConfig.version
+        version: serviceConfig.version,
       },
-      errors
+      errors,
     };
   }
 
@@ -51,7 +51,7 @@ class ErrorsHandler {
         ts: dayjs(errorObject.date).unix(),
         data: entityString,
         message_kafka: errorObject,
-        fixed: false
+        fixed: false,
       });
 
       this.sendError(errorObject);
@@ -59,8 +59,6 @@ class ErrorsHandler {
       logger.error(`🗙 Error in ERROR_HANDLER. catchError: Can't insert row to errors table with next data:
         ${entityString}`);
     }
-
-    console.log(errorObject);
   }
 
   async checkNotSentErrors(): Promise<void> {
@@ -82,8 +80,8 @@ class ErrorsHandler {
       [
         {
           topic: kafkaOutProducerConfig.incidentsTopic,
-          messages: JSON.stringify(errorObject)
-        }
+          messages: JSON.stringify(errorObject),
+        },
       ],
       async error => {
         if (error) return logger.error('🗙 Error in ERROR_HANDLER. sendError - producer: ', error);
@@ -91,7 +89,7 @@ class ErrorsHandler {
         try {
           const result = await db.setTsSend({
             id: errorObject.id,
-            ts_send: Date.now()
+            ts_send: Date.now(),
           });
 
           if (result.rowCount !== 1) {

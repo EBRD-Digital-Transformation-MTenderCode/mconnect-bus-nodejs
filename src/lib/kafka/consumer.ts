@@ -9,7 +9,7 @@ export const InConsumer = new Kafka.ConsumerGroup(
     kafkaHost: kafkaClientConfig.kafkaHost,
     groupId: kafkaInConsumerConfig.inGroupId,
     protocol: ['roundrobin'],
-    connectOnReady: true
+    connectOnReady: true,
   },
   kafkaInConsumerConfig.inTopic
 );

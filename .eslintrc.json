@@ -28,10 +28,11 @@
   },
   "rules": {
     "@typescript-eslint/ban-ts-ignore": "warn",
-    "@typescript-eslint/camelcase": "warn",
+    "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/member-ordering": "error",
-    "class-methods-use-this": "warn",
+    "@typescript-eslint/no-explicit-any": "off",
+    "class-methods-use-this": "off",
     "consistent-return": "off",
     "import/extensions": "off",
     "import/prefer-default-export": "off",

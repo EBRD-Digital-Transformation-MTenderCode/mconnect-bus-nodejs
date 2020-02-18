@@ -20,7 +20,7 @@ const updateRow: TUpdateRow = ({ table, contractId, columns }) => {
     }`;
   }, '');
 
-  const nullCondition: string = Object.entries(columns).reduce((accVal, [key, value], i) => {
+  const nullCondition: string = Object.entries(columns).reduce((accVal, [key], i) => {
     return `${i !== 0 ? 'AND' : ''} "${key}" IS NULL`;
   }, '');
 

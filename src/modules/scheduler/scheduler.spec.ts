@@ -13,7 +13,7 @@ jest.mock('lib/logger');
 jest.mock('lib/kafka');
 jest.mock('api', () => ({
   fetchContractCommit: jest.fn(),
-  fetchContractsQueue: jest.fn()
+  fetchContractsQueue: jest.fn(),
 }));
 
 describe('[Unit] Scheduler', () => {
@@ -28,9 +28,9 @@ describe('[Unit] Scheduler', () => {
       st_date: '1400-94-94',
       reg_nom: '124124124',
       reg_date: '1240-24-42',
-      descr: 'message description'
+      descr: 'message description',
     },
-    ts_in: Date.now()
+    ts_in: Date.now(),
   };
   const contractsLength = 1;
 
@@ -102,15 +102,15 @@ describe('[Unit] Scheduler', () => {
                 table: dbConfig.tables.treasuryResponses,
                 contractId: contract.id_doc,
                 columns: {
-                  ts_commit: expect.any(Number)
-                }
+                  ts_commit: expect.any(Number),
+                },
               });
             });
 
             describe('When timestamp is successfully filled', () => {
               beforeEach(() => {
                 (db.updateRow as jest.Mock).mockResolvedValue({
-                  rowCount: 1
+                  rowCount: 1,
                 });
               });
 
@@ -127,7 +127,7 @@ describe('[Unit] Scheduler', () => {
             describe('When timestamp is already filled', () => {
               it('Should log error', async () => {
                 (db.updateRow as jest.Mock).mockResolvedValue({
-                  rowCount: 2
+                  rowCount: 2,
                 });
 
                 await sut.start();
@@ -172,10 +172,10 @@ describe('[Unit] Scheduler', () => {
         command: 'launchAcVerification',
         data: {
           cpid: 'data-cpid',
-          ocid: 'data-ocid'
+          ocid: 'data-ocid',
         },
-        version: '0.0.1'
-      }
+        version: '0.0.1',
+      },
     };
     const notSentLength = 1;
 
@@ -186,14 +186,14 @@ describe('[Unit] Scheduler', () => {
 
     it('Should get not sent messages', async () => {
       (db.updateRow as jest.Mock).mockResolvedValueOnce({
-        rowCount: 1
+        rowCount: 1,
       });
 
       await sut.start();
 
       expect(db.getNotSentMessages).toHaveBeenCalled();
       expect(db.getNotSentMessages).toHaveBeenCalledWith({
-        launch: false
+        launch: false,
       });
     });
 
@@ -204,7 +204,7 @@ describe('[Unit] Scheduler', () => {
 
       it('Should send response for every not sent message', async () => {
         (db.updateRow as jest.Mock).mockResolvedValueOnce({
-          rowCount: 1
+          rowCount: 1,
         });
 
         await sut.start();
@@ -214,8 +214,8 @@ describe('[Unit] Scheduler', () => {
           [
             {
               topic: kafkaOutProducerConfig.outTopic,
-              messages: JSON.stringify(notSent.message)
-            }
+              messages: JSON.stringify(notSent.message),
+            },
           ],
           expect.any(Function)
         );
@@ -223,7 +223,7 @@ describe('[Unit] Scheduler', () => {
 
       it('Should log error if OutProducer fails to send a message', async () => {
         (db.updateRow as jest.Mock).mockResolvedValueOnce({
-          rowCount: 1
+          rowCount: 1,
         });
 
         const error = new Error('Error in callback');
@@ -240,7 +240,7 @@ describe('[Unit] Scheduler', () => {
       describe('Adding contract timestamp', () => {
         it('Should add contract timestamp while sending a message', async () => {
           (db.updateRow as jest.Mock).mockResolvedValue({
-            rowCount: 1
+            rowCount: 1,
           });
 
           await sut.start();
@@ -253,8 +253,8 @@ describe('[Unit] Scheduler', () => {
             table: dbConfig.tables.responses,
             contractId: notSent.id_doc,
             columns: {
-              ts: expect.any(Number)
-            }
+              ts: expect.any(Number),
+            },
           });
         });
 
@@ -262,10 +262,10 @@ describe('[Unit] Scheduler', () => {
           it('Should log error', async () => {
             (db.updateRow as jest.Mock)
               .mockResolvedValueOnce({
-                rowCount: 1
+                rowCount: 1,
               })
               .mockResolvedValueOnce({
-                rowCount: 2
+                rowCount: 2,
               });
 
             await sut.start();
@@ -281,10 +281,10 @@ describe('[Unit] Scheduler', () => {
           it('Should log error', async () => {
             (db.updateRow as jest.Mock)
               .mockResolvedValueOnce({
-                rowCount: 1
+                rowCount: 1,
               })
               .mockResolvedValueOnce({
-                rowCount: 2
+                rowCount: 2,
               });
 
             await sut.start();
@@ -331,14 +331,14 @@ describe('[Unit] Scheduler', () => {
       st_date: 'string',
       reg_nom: 'string',
       reg_date: 'string',
-      descr: 'string'
+      descr: 'string',
     });
 
     beforeEach(() => {
       (db.getNotCommitteds as jest.Mock).mockResolvedValue([contract]);
       (fetchContractCommit as jest.Mock).mockResolvedValue(true);
       (db.updateRow as jest.Mock).mockResolvedValue({
-        rowCount: 1
+        rowCount: 1,
       });
       (db.getNotSentMessages as jest.Mock).mockResolvedValue([]);
     });
@@ -353,7 +353,7 @@ describe('[Unit] Scheduler', () => {
       describe('When contracts queue response has contracts', () => {
         beforeEach(() => {
           (fetchContractsQueue as jest.Mock).mockResolvedValue({
-            contract: [queueContract('3004'), queueContract('3005'), queueContract('3006')]
+            contract: [queueContract('3004'), queueContract('3005'), queueContract('3006')],
           });
         });
 
@@ -369,7 +369,7 @@ describe('[Unit] Scheduler', () => {
               describe('When contract does exist', () => {
                 beforeEach(() => {
                   (db.isExist as jest.Mock).mockResolvedValue({
-                    exists: true
+                    exists: true,
                   });
                 });
 
@@ -381,7 +381,7 @@ describe('[Unit] Scheduler', () => {
                     id_doc: queueContract().id_dok,
                     status_code: queueContract().status,
                     message: queueContract(),
-                    ts_in: expect.any(Number)
+                    ts_in: expect.any(Number),
                   });
                 });
 
@@ -399,11 +399,11 @@ describe('[Unit] Scheduler', () => {
                         cpid: 'ocds-b3wdp1-MD-1540363926212',
                         ocid: 'ocds-b3wdp1-MD-1540363926212-AC-1543432597294',
                         verification: {
-                          rationale: 'string'
+                          rationale: 'string',
                         },
-                        dateMet: 'string'
+                        dateMet: 'string',
                       },
-                      version: '0.0.1'
+                      version: '0.0.1',
                     } as IOut;
 
                     beforeEach(() => {
@@ -419,17 +419,17 @@ describe('[Unit] Scheduler', () => {
                           st_date: 'string',
                           reg_nom: 'string',
                           reg_date: 'string',
-                          descr: 'string'
+                          descr: 'string',
                         } as ITreasuryContract);
 
                       (fetchContractsQueue as jest.Mock).mockResolvedValue({
-                        contract: [queueContract()]
+                        contract: [queueContract()],
                       });
 
                       kafkaMessageOut.command = 'treasuryApprovingAc';
                       kafkaMessageOut.data.verification = {
                         value: '3004',
-                        rationale: 'string'
+                        rationale: 'string',
                       };
 
                       await sut.start();
@@ -453,21 +453,21 @@ describe('[Unit] Scheduler', () => {
                           st_date: 'string',
                           reg_nom: 'string',
                           reg_date: 'string',
-                          descr: 'string'
+                          descr: 'string',
                         } as ITreasuryContract);
 
                       (fetchContractsQueue as jest.Mock).mockResolvedValue({
-                        contract: [queueContract()]
+                        contract: [queueContract()],
                       });
 
                       kafkaMessageOut.command = 'requestForAcClarification';
                       kafkaMessageOut.data.verification = {
                         value: '3005',
-                        rationale: 'string'
+                        rationale: 'string',
                       };
                       kafkaMessageOut.data.regData = {
                         externalRegId: queueContract().reg_nom,
-                        regDate: queueContract().reg_date
+                        regDate: queueContract().reg_date,
                       };
 
                       await sut.start();
@@ -491,18 +491,18 @@ describe('[Unit] Scheduler', () => {
                           st_date: 'string',
                           reg_nom: 'string',
                           reg_date: 'string',
-                          descr: 'string'
+                          descr: 'string',
                         } as ITreasuryContract);
 
                       (fetchContractsQueue as jest.Mock).mockResolvedValue({
-                        contract: [queueContract()]
+                        contract: [queueContract()],
                       });
 
                       kafkaMessageOut.command = 'processAcRejection';
                       kafkaMessageOut.data.regData = undefined;
                       kafkaMessageOut.data.verification = {
                         value: '3006',
-                        rationale: 'string'
+                        rationale: 'string',
                       };
 
                       await sut.start();
@@ -543,7 +543,7 @@ describe('[Unit] Scheduler', () => {
                       describe('When timestamp is already filled', () => {
                         it('Should log error', async () => {
                           (db.updateRow as jest.Mock).mockResolvedValue({
-                            rowCount: 2
+                            rowCount: 2,
                           });
 
                           await sut.start();
@@ -595,11 +595,11 @@ describe('[Unit] Scheduler', () => {
                           status: '3005',
                           st_date: 'string',
                           reg_date: 'string',
-                          descr: 'string'
+                          descr: 'string',
                         } as ITreasuryContract);
 
                       (fetchContractsQueue as jest.Mock).mockResolvedValue({
-                        contract: [queueContract()]
+                        contract: [queueContract()],
                       });
 
                       await sut.start();
@@ -622,11 +622,11 @@ describe('[Unit] Scheduler', () => {
                           status: '3005',
                           st_date: 'string',
                           reg_nom: 'string',
-                          descr: 'string'
+                          descr: 'string',
                         } as ITreasuryContract);
 
                       (fetchContractsQueue as jest.Mock).mockResolvedValue({
-                        contract: [queueContract()]
+                        contract: [queueContract()],
                       });
 
                       await sut.start();
@@ -645,7 +645,7 @@ describe('[Unit] Scheduler', () => {
               describe('When contract does not exist', () => {
                 it('Should return', async () => {
                   (db.isExist as jest.Mock).mockResolvedValue({
-                    exists: false
+                    exists: false,
                   });
 
                   await sut.start();
