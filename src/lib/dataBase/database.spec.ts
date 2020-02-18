@@ -8,7 +8,7 @@ describe('[Integration] Database', () => {
     Requests = 'requests',
     Responses = 'responses',
     TreasuryRequests = 'treasury_requests',
-    TreasuryResponses = 'treasury_responses'
+    TreasuryResponses = 'treasury_responses',
   }
 
   afterEach(async () => {
@@ -26,7 +26,7 @@ describe('[Integration] Database', () => {
       cmd_id,
       cmd_name: 'command',
       ts: Date.now(),
-      message: {} as IIn
+      message: {} as IIn,
     };
 
     it('Should insert request row to requests table', () => {
@@ -38,7 +38,7 @@ describe('[Integration] Database', () => {
         ).then(result => {
           expect(result).toEqual({
             ...requestsRow,
-            ts: expect.any(Date)
+            ts: expect.any(Date),
           });
         });
       });
@@ -75,24 +75,24 @@ describe('[Integration] Database', () => {
           achiz_date: 'string',
 
           da_expire: 'string',
-          c_link: 'string'
+          c_link: 'string',
         },
         benef: [
           {
             id_dok: id_doc,
             bbic: 'string',
-            biban: 'string'
-          }
+            biban: 'string',
+          },
         ],
         details: [
           {
             id_dok: id_doc,
             suma: 1,
             piban: 'string',
-            byear: 2020
-          }
-        ]
-      }
+            byear: 2020,
+          },
+        ],
+      },
     });
 
     it('Should insert treasury request row to treasury requests table with ts = null', () => {
@@ -106,7 +106,7 @@ describe('[Integration] Database', () => {
         ).then(result => {
           expect(result).toEqual({
             ...treasuryRequestsRow(id_doc),
-            ts: null
+            ts: null,
           });
         });
       });
@@ -133,9 +133,9 @@ describe('[Integration] Database', () => {
         st_date: 'string',
         reg_nom: 'string',
         reg_date: 'string',
-        descr: 'string'
+        descr: 'string',
       },
-      ts_in
+      ts_in,
     });
 
     it('Should insert treasure response row to treasure responses table with ts_commit = null', () => {
@@ -150,7 +150,7 @@ describe('[Integration] Database', () => {
           expect(result).toEqual({
             ...responseRow(id_doc),
             ts_in: expect.any(Date),
-            ts_commit: null
+            ts_commit: null,
           });
         });
       });
@@ -172,7 +172,7 @@ describe('[Integration] Database', () => {
       id_doc,
       cmd_id,
       cmd_name: 'launchAcVerification',
-      message: {} as IOut
+      message: {} as IOut,
     });
 
     it('Should insert request row to responses table with ts = null', () => {
@@ -186,7 +186,7 @@ describe('[Integration] Database', () => {
         ).then(result => {
           expect(result).toEqual({
             ...responsesRow(id_doc),
-            ts: null
+            ts: null,
           });
         });
       });
@@ -213,9 +213,9 @@ describe('[Integration] Database', () => {
         st_date: 'string',
         reg_nom: 'string',
         reg_date: 'string',
-        descr: 'string'
+        descr: 'string',
       },
-      ts_in
+      ts_in,
     });
 
     describe('When there are no uncommited contracts', () => {
@@ -256,7 +256,7 @@ describe('[Integration] Database', () => {
         db.insertToTreasureResponses(treasuryResponseRow(id_doc1)).then(() => {
           db.insertToTreasureResponses({
             ...treasuryResponseRow(id_doc2),
-            ts_commit: Date.now()
+            ts_commit: Date.now(),
           }).then(() => {
             db.getNotCommitteds().then(result => {
               expect(result).toEqual([treasuryResponseRow(id_doc1)]);
@@ -291,24 +291,24 @@ describe('[Integration] Database', () => {
           achiz_date: 'string',
 
           da_expire: 'string',
-          c_link: 'string'
+          c_link: 'string',
         },
         benef: [
           {
             id_dok: id_doc,
             bbic: 'string',
-            biban: 'string'
-          }
+            biban: 'string',
+          },
         ],
         details: [
           {
             id_dok: id_doc,
             suma: 1,
             piban: 'string',
-            byear: 2020
-          }
-        ]
-      }
+            byear: 2020,
+          },
+        ],
+      },
     });
 
     describe('When there are no unregistered contracts', () => {
@@ -349,7 +349,7 @@ describe('[Integration] Database', () => {
         db.insertToTreasuryRequests(treasuryRequestsRow(id_doc1)).then(() => {
           db.insertToTreasuryRequests({
             ...treasuryRequestsRow(id_doc2),
-            ts: Date.now()
+            ts: Date.now(),
           }).then(() => {
             db.getNotRegistereds().then(result => {
               expect(result).toEqual([treasuryRequestsRow(id_doc1)]);
@@ -365,7 +365,7 @@ describe('[Integration] Database', () => {
       id_doc,
       cmd_id,
       cmd_name: 'launchAcVerification',
-      message: {} as IOut
+      message: {} as IOut,
     });
 
     describe('Command id is launchAcVerification', () => {
@@ -373,7 +373,7 @@ describe('[Integration] Database', () => {
 
       describe('When there are no unsent messages', () => {
         it('Should return empty array', () => {
-          db.getNotSentMessages({ launch: true }).then(result => {
+          db.getNotSentMessages().then(result => {
             expect(result).toEqual([]);
           });
         });
@@ -384,7 +384,7 @@ describe('[Integration] Database', () => {
           const id_doc = '0d20d00c-69c6-13e8-adc0-fa7ae02cce41';
 
           db.insertToResponses(responsesRow(id_doc, cmd_id)).then(() => {
-            db.getNotSentMessages({ launch: true }).then(result => {
+            db.getNotSentMessages().then(result => {
               expect(result).toEqual([responsesRow(id_doc, cmd_id)]);
             });
           });
@@ -398,7 +398,7 @@ describe('[Integration] Database', () => {
         it('Should return array of two unsent messages', () => {
           db.insertToResponses(responsesRow(id_doc1, cmd_id)).then(() => {
             db.insertToResponses(responsesRow(id_doc2, cmd_id)).then(() => {
-              db.getNotSentMessages({ launch: true }).then(result => {
+              db.getNotSentMessages().then(result => {
                 expect(result).toEqual([responsesRow(id_doc1, cmd_id), responsesRow(id_doc2, cmd_id)]);
               });
             });
@@ -409,9 +409,9 @@ describe('[Integration] Database', () => {
           db.insertToResponses(responsesRow(id_doc1, cmd_id)).then(() => {
             db.insertToResponses({
               ...responsesRow(id_doc2, cmd_id),
-              ts: Date.now()
+              ts: Date.now(),
             }).then(() => {
-              db.getNotSentMessages({ launch: true }).then(result => {
+              db.getNotSentMessages().then(result => {
                 expect(result).toEqual([responsesRow(id_doc1, cmd_id)]);
               });
             });
@@ -421,7 +421,7 @@ describe('[Integration] Database', () => {
         it('Should return only messages with proper command id', () => {
           db.insertToResponses(responsesRow(id_doc1, cmd_id)).then(() => {
             db.insertToResponses(responsesRow(id_doc2, 'treasuryApprovingAc')).then(() => {
-              db.getNotSentMessages({ launch: true }).then(result => {
+              db.getNotSentMessages().then(result => {
                 expect(result).toEqual([responsesRow(id_doc1, cmd_id)]);
               });
             });
@@ -435,7 +435,7 @@ describe('[Integration] Database', () => {
 
       describe('When there are no unsent messages', () => {
         it('Should return empty array', () => {
-          db.getNotSentMessages({ launch: false }).then(result => {
+          db.getNotSentMessages().then(result => {
             expect(result).toEqual([]);
           });
         });
@@ -446,7 +446,7 @@ describe('[Integration] Database', () => {
           const id_doc = '0d20d00c-69c6-13e8-adc0-fa7ae02cce41';
 
           db.insertToResponses(responsesRow(id_doc, cmd_id)).then(() => {
-            db.getNotSentMessages({ launch: false }).then(result => {
+            db.getNotSentMessages().then(result => {
               expect(result).toEqual([responsesRow(id_doc, cmd_id)]);
             });
           });
@@ -460,7 +460,7 @@ describe('[Integration] Database', () => {
         it('Should return array of two unsent messages', () => {
           db.insertToResponses(responsesRow(id_doc1, cmd_id)).then(() => {
             db.insertToResponses(responsesRow(id_doc2, cmd_id)).then(() => {
-              db.getNotSentMessages({ launch: false }).then(result => {
+              db.getNotSentMessages().then(result => {
                 expect(result).toEqual([responsesRow(id_doc1, cmd_id), responsesRow(id_doc2, cmd_id)]);
               });
             });
@@ -471,9 +471,9 @@ describe('[Integration] Database', () => {
           db.insertToResponses(responsesRow(id_doc1, cmd_id)).then(() => {
             db.insertToResponses({
               ...responsesRow(id_doc2, cmd_id),
-              ts: Date.now()
+              ts: Date.now(),
             }).then(() => {
-              db.getNotSentMessages({ launch: false }).then(result => {
+              db.getNotSentMessages().then(result => {
                 expect(result).toEqual([responsesRow(id_doc1, cmd_id)]);
               });
             });
@@ -483,7 +483,7 @@ describe('[Integration] Database', () => {
         it('Should return only messages with proper command id', () => {
           db.insertToResponses(responsesRow(id_doc1, cmd_id)).then(() => {
             db.insertToResponses(responsesRow(id_doc2, 'launchAcVerification')).then(() => {
-              db.getNotSentMessages({ launch: false }).then(result => {
+              db.getNotSentMessages().then(result => {
                 expect(result).toEqual([responsesRow(id_doc1, cmd_id)]);
               });
             });
@@ -500,7 +500,7 @@ describe('[Integration] Database', () => {
       id_doc,
       cmd_id,
       cmd_name: 'launchAcVerification',
-      message: {} as IOut
+      message: {} as IOut,
     };
 
     it('Should update given column in a given row', () => {
@@ -509,12 +509,12 @@ describe('[Integration] Database', () => {
           table: Table.Responses,
           contractId: id_doc,
           columns: {
-            cmd_name: 'treasuryApprovingAc'
-          }
+            cmd_name: 'treasuryApprovingAc',
+          },
         }).then(result => {
           expect(result).toEqual({
             ...responsesRow,
-            cmd_name: 'treasuryApprovingAc'
+            cmd_name: 'treasuryApprovingAc',
           });
         });
       });
@@ -526,12 +526,12 @@ describe('[Integration] Database', () => {
           table: Table.Responses,
           contractId: id_doc,
           columns: {
-            ts: tsToPgTs(Date.now())
-          }
+            ts: tsToPgTs(Date.now()),
+          },
         }).then(result => {
           expect(result).toEqual({
             ...responsesRow,
-            ts: expect.any(Date)
+            ts: expect.any(Date),
           });
         });
       });
@@ -542,8 +542,8 @@ describe('[Integration] Database', () => {
         table: Table.Responses,
         contractId: '0d20d00c-69c6-13e8-adc0-fa7ae02cce22',
         columns: {
-          ts: tsToPgTs(Date.now())
-        }
+          ts: tsToPgTs(Date.now()),
+        },
       }).then(result => {
         expect(result).toBeNull();
       });
@@ -557,7 +557,7 @@ describe('[Integration] Database', () => {
       cmd_id,
       cmd_name: 'command',
       ts: Date.now(),
-      message: {} as IIn
+      message: {} as IIn,
     };
 
     describe('When row exists', () => {
@@ -586,7 +586,7 @@ describe('[Integration] Database', () => {
       id_doc,
       cmd_id,
       cmd_name: 'launchAcVerification',
-      message: {} as IOut
+      message: {} as IOut,
     };
 
     describe('When row exists in the table', () => {
