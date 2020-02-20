@@ -51,6 +51,9 @@ export default class Scheduler {
         {
           code: 'ER-3.11.2.5',
           description: 'Получено значение атрибута "st_date", которое не удалось привести к UTC формату',
+          metaData: {
+            troubleEntity: JSON.stringify(treasuryContract),
+          },
         },
       ]);
       return;
@@ -86,6 +89,9 @@ export default class Scheduler {
           errors.push({
             code: 'ER-3.11.2.4',
             description: 'Получено значение атрибута "reg_nom" с типом не строка и не пустой объект',
+            metaData: {
+              troubleEntity: JSON.stringify(treasuryContract),
+            },
           });
         }
 
@@ -93,6 +99,9 @@ export default class Scheduler {
           errors.push({
             code: 'ER-3.11.2.2',
             description: 'Получено значение атрибута "reg_date" с типом не строка и не пустой объект',
+            metaData: {
+              troubleEntity: JSON.stringify(treasuryContract),
+            },
           });
         }
 
@@ -116,6 +125,9 @@ export default class Scheduler {
         description: `Не получилось найти любой из необходимых атрибутов внутри ответа от Казны: ${error.message}${
           error.value !== undefined ? `. Value is - ${error.value}` : ''
         }`,
+        metaData: {
+          troubleEntity: JSON.stringify(treasuryContract),
+        },
       }));
 
       await errorsHandler.catchError(JSON.stringify(treasuryContract), errors);
@@ -282,6 +294,9 @@ export default class Scheduler {
             {
               code: 'ER-3.11.2.6',
               description: `После отправки запроса на получение очереди контрактов (${statusCode}), получен ответ не в формате: объект, внутри которого массив contract ({ "contract": [] } )`,
+              metaData: {
+                troubleEntity: JSON.stringify(contractsQueue),
+              },
             },
           ]);
           continue;

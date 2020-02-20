@@ -265,6 +265,9 @@ export default class Registrator {
           {
             code: 'ER-3.11.2.7',
             description: 'Не удалось получить рекорд контракта',
+            metaData: {
+              troubleEntity: JSON.stringify(messageData),
+            },
           },
         ]);
         return;
@@ -293,6 +296,9 @@ export default class Registrator {
           {
             code: 'ER-3.11.2.8',
             description: 'Не удалось получить рекорд тендера',
+            metaData: {
+              troubleEntity: JSON.stringify(messageData),
+            },
           },
         ]);
         return;
@@ -407,6 +413,9 @@ export default class Registrator {
           description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.message}${
             error.value !== undefined ? `. Value is - ${error.value}` : ''
           }`,
+          metaData: {
+            troubleEntity: JSON.stringify(messageData),
+          },
         }));
 
         await errorsHandler.catchError(JSON.stringify(messageData), errors);
@@ -419,6 +428,9 @@ export default class Registrator {
         {
           code: 'ER-3.11.2.9',
           description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.stack}`,
+          metaData: {
+            troubleEntity: JSON.stringify(messageData),
+          },
         },
       ]);
     }
