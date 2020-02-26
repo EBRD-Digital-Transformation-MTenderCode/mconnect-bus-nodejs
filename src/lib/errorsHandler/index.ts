@@ -30,6 +30,8 @@ class ErrorsHandler {
   public async catchError(entityString: string, errors: IErrorInfo[]): Promise<void> {
     const errorObject = ErrorsHandler.generateErrorObject(errors);
 
+    logger.warn(`! ERROR_HANDLER - catch error - \n${JSON.stringify(errorObject, null, 2)}`);
+
     const entityHash = crypto
       .createHash('md5')
       .update(entityString)
