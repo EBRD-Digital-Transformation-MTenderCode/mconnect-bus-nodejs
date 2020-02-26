@@ -163,10 +163,7 @@ export const contractEntitySchema = yup
             .of(
               yup.object().shape({
                 relationship: yup.string().required(),
-                identifier: yup
-                  .string()
-                  .matches(patterns.ocidTender)
-                  .required(),
+                identifier: yup.string().required(),
               })
             )
             .min(1)
