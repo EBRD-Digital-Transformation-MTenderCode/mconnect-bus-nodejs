@@ -57,7 +57,7 @@ class ErrorsHandler {
       this.sendError(errorObject);
     } catch (error) {
       logger.error(`🗙 Error in ERROR_HANDLER. catchError: Can't insert row to errors table with next data:
-        ${entityString}`);
+        ${entityString}. ${error}`);
     }
   }
 

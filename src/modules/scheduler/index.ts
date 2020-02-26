@@ -47,7 +47,7 @@ export default class Scheduler {
     const { id_dok, status, descr, st_date, reg_nom, reg_date } = treasuryContract;
 
     if (!dateIsValid(st_date)) {
-      errorsHandler.catchError(JSON.stringify(treasuryContract), [
+      await errorsHandler.catchError(JSON.stringify(treasuryContract), [
         {
           code: 'ER-3.11.2.5',
           description: 'Получено значение атрибута "st_date", которое не удалось привести к UTC формату',
