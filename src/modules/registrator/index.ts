@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { Message as IMessage } from 'kafka-node';
 
 import * as yup from 'yup';
-import { registrationPayloadSchema } from '../../validationsSchemas';
+import { contractEntitySchema, registrationPayloadSchema } from '../../validationsSchemas';
 
 import { fetchContractRegister, fetchEntityRecord } from '../../api';
 
@@ -273,6 +273,25 @@ export default class Registrator {
         return;
       }
 
+      try {
+        await contractEntitySchema.validate(acRecord, {
+          abortEarly: false,
+        });
+      } catch (validationError) {
+        const errors = validationError.inner.map((error: yup.ValidationError) => ({
+          code: 'ER-3.11.2.9',
+          description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.message}${
+            error.value !== undefined ? `. Value is - ${error.value}` : ''
+          }`,
+          metaData: {
+            troubleEntity: JSON.stringify(messageData),
+          },
+        }));
+
+        await errorsHandler.catchError(JSON.stringify(messageData), errors);
+        return;
+      }
+
       const [acRelease] = acRecord.releases;
 
       const { planning, contracts, parties, relatedProcesses } = acRelease;
@@ -351,13 +370,15 @@ export default class Registrator {
           return allocation.budgetBreakdownID === treasuryBudgetSrc.budgetBreakdownID;
         });
 
-        const startDate = needBudgetAllocation?.period.startDate ?? '';
+        if (!needBudgetAllocation) throw new Error(`Can't find FS with id - ${treasuryBudgetSrc.budgetBreakdownID}`);
+
+        const byear = +needBudgetAllocation.period.startDate.substr(0, 4);
 
         return {
           id_dok,
           suma: treasuryBudgetSrc.amount,
           piban: treasuryBudgetSrc.budgetIBAN,
-          byear: +startDate.substr(0, 4),
+          byear,
         };
       });
 
@@ -427,7 +448,10 @@ export default class Registrator {
       await errorsHandler.catchError(JSON.stringify(messageData), [
         {
           code: 'ER-3.11.2.9',
-          description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.stack}`,
+          description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.mesage.replace(
+            /['"]/,
+            '`'
+          )}`,
           metaData: {
             troubleEntity: JSON.stringify(messageData),
           },
