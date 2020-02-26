@@ -448,7 +448,7 @@ export default class Registrator {
       await errorsHandler.catchError(JSON.stringify(messageData), [
         {
           code: 'ER-3.11.2.9',
-          description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.mesage.replace(
+          description: `Не удалось получить любой из необходимых атрибутов внутри релиза: ${error.message.replace(
             /['"]/,
             '`'
           )}`,
